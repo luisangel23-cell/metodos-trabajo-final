@@ -81,3 +81,15 @@ pre code {
     left: 0;
   }
 }
+
+/* Asegura que el cuerpo y el texto del libro siempre sean visibles */
+.book .book-body .page-wrapper .page-inner section.normal,
+.book .book-body .page-wrapper .page-inner section.normal * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.book .book-body .page-wrapper {
+  position: relative !important;
+  z-index: 1 !important;
+}
