@@ -1678,6 +1678,7 @@ abline(h = umbral, lty = 2, col = "#B22222")
 ```{r}
 ord <- order(cook, decreasing = TRUE)
 tibble(`Observación` = names(cook)[ord], `Distancia de Cook` = cook[ord]) %>%
+  head(10) %>%
   tabla_rlm("Observaciones con mayor distancia de Cook")
 cook_max <- max(cook)
 rm(cook); invisible(gc())
