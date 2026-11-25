@@ -21,24 +21,6 @@ El análisis abarca **10,000 registros** y 6 variables del conjunto de datos de 
 <div id="resumen-portada" class="resumen-portada" aria-live="polite">
 <p><a href="rlm.html#resultados-ejecutivos">Ver las métricas del promedio, BIC y AIC</a></p>
 </div>
-<script>
-(function () {
-  const resumen = document.getElementById("resumen-portada");
-  if (!resumen) return;
-  fetch("rlm.html")
-    .then(function (response) {
-      if (!response.ok) throw new Error("Resultados no disponibles");
-      return response.text();
-    })
-    .then(function (html) {
-      const resultados = new DOMParser()
-        .parseFromString(html, "text/html")
-        .getElementById("resultados-ejecutivos");
-      if (resultados) resumen.replaceChildren(...resultados.childNodes);
-    })
-    .catch(function () {});
-})();
-</script>
 
 <div class="graficos-portada">
 <figure>

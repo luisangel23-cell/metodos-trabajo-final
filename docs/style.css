@@ -40,20 +40,30 @@ pre code {
   font-size: 0.9em;
 }
 
-/* Fondo transparente en los contenedores internos de GitBook */
-.book .book-body,
+.book .book-body {
+  position: relative !important;
+  isolation: isolate !important;
+  background-color: #ffffff !important;
+  overflow-y: auto !important;
+}
+
 .book .book-body .body-inner,
 .book .book-body .page-wrapper,
 .book .book-body .page-wrapper .page-inner,
 .book .book-body .page-wrapper .page-inner section.normal {
+  display: block !important;
+  position: relative !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  min-height: 100% !important;
+  transform: none !important;
   background: transparent !important;
 }
 
-/* Contexto de apilamiento para que la imagen quede encima del blanco pero debajo del texto */
-.book .book-body {
-  position: relative;
-  isolation: isolate;
-  background-color: #ffffff !important;
+.book .book-body .page-wrapper .page-inner section.normal * {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .book .book-body::before {
@@ -68,28 +78,16 @@ pre code {
   background-position: center center;
   background-size: 60%;
   opacity: 0.12;
-  pointer-events: none;
-  z-index: -1;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
-/* Cuando se oculta el menú lateral o en pantallas pequeñas, centra en toda la ventana */
 .book:not(.with-summary) .book-body::before {
   left: 0;
 }
+
 @media (max-width: 1240px) {
   .book .book-body::before {
     left: 0;
   }
-}
-
-/* Asegura que el cuerpo y el texto del libro siempre sean visibles */
-.book .book-body .page-wrapper .page-inner section.normal,
-.book .book-body .page-wrapper .page-inner section.normal * {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.book .book-body .page-wrapper {
-  position: relative !important;
-  z-index: 1 !important;
 }

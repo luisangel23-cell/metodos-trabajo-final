@@ -207,24 +207,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a href="rlm.html#resultados-ejecutivos">Ver las métricas del promedio, BIC y AIC</a>
 </p>
 </div>
-<script>
-(function () {
-  const resumen = document.getElementById("resumen-portada");
-  if (!resumen) return;
-  fetch("rlm.html")
-    .then(function (response) {
-      if (!response.ok) throw new Error("Resultados no disponibles");
-      return response.text();
-    })
-    .then(function (html) {
-      const resultados = new DOMParser()
-        .parseFromString(html, "text/html")
-        .getElementById("resultados-ejecutivos");
-      if (resultados) resumen.replaceChildren(...resultados.childNodes);
-    })
-    .catch(function () {});
-})();
-</script>
 <div class="graficos-portada">
 <figure>
 <a href="intro.html#distribuci%C3%B3n"><img src="analisis-seguros_files/figure-html/histograma-respuesta-1.png" alt="Histograma del índice de rendimiento académico"></a>
