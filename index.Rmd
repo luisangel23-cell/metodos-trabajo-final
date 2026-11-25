@@ -1,0 +1,147 @@
+---
+title: "Factores asociados al rendimiento académico"
+author: "Ronald Díaz y Luis Salgado"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+biblio-style: apalike
+link-citations: yes
+description: "Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil."
+---
+
+# Introducción
+
+## Resumen ejecutivo
+
+**Pregunta.** ¿Cuánto mejora la estimación del índice de rendimiento académico cuando incorporamos los hábitos de estudio y los antecedentes previos de los estudiantes?
+
+El análisis abarca **10,000 registros** y 6 variables del conjunto de datos de rendimiento estudiantil (`Student_Performance.csv`). A diferencia de escenarios con alto ruido no explicado, el modelo de regresión lineal múltiple explica cerca del **98.9 %** de la variabilidad de `Performance Index` y reduce el error de predicción en alrededor del **89.6 %** frente a predecir el promedio general. La conclusión se limita a estos datos y a los modelos evaluados.
+
+<div id="resumen-portada" class="resumen-portada" aria-live="polite">
+<p><a href="rlm.html#resultados-ejecutivos">Ver las métricas del promedio, BIC y AIC</a></p>
+</div>
+<script>
+(function () {
+  const resumen = document.getElementById("resumen-portada");
+  if (!resumen) return;
+  fetch("rlm.html")
+    .then(function (response) {
+      if (!response.ok) throw new Error("Resultados no disponibles");
+      return response.text();
+    })
+    .then(function (html) {
+      const resultados = new DOMParser()
+        .parseFromString(html, "text/html")
+        .getElementById("resultados-ejecutivos");
+      if (resultados) resumen.replaceChildren(...resultados.childNodes);
+    })
+    .catch(function () {});
+})();
+</script>
+
+<div class="graficos-portada">
+<figure>
+<a href="intro.html#distribuci%C3%B3n"><img src="analisis-seguros_files/figure-html/histograma-respuesta-1.png" alt="Histograma del índice de rendimiento académico"></a>
+<figcaption>Distribución del rendimiento</figcaption>
+</figure>
+<figure>
+<a href="rlm.html#comparaci%C3%B3n-de-modelos"><img src="analisis-seguros_files/figure-html/comparacion-rmse-1.png" alt="Comparación del RMSE del promedio, BIC y AIC"></a>
+<figcaption>Error en prueba</figcaption>
+</figure>
+<figure>
+<a href="rlm.html#varianza-constante-de-los-errores"><img src="analisis-seguros_files/figure-html/res-vs-ajustados-1.png" alt="Gráfico de residuales frente a valores ajustados"></a>
+<figcaption>Diagnóstico de residuales</figcaption>
+</figure>
+</div>
+
+## Datos y alcance
+
+| Aspecto | Descripción |
+|:--|:--|
+| Fuente | Conjunto de datos de rendimiento estudiantil (`Student_Performance.csv`). |
+| Unidad de análisis | Registro individual de estudiante. La variable objetivo es `Performance Index`. |
+| Variables excluidas del modelo | Ninguna (las 5 variables predictoras disponibles ingresan al análisis). |
+| Datos faltantes | El dataset está completo (0 valores faltantes en las 6 variables). En predicción, las referencias se calculan solo con los datos de ajuste de cada partición. |
+| Alcance | Evaluación interna en una partición aleatoria (80 % entrenamiento / 20 % prueba). El diseño permite estudiar asociaciones y capacidad predictiva interna, con validación externa pendiente. |
+
+## Contexto y objetivos
+
+El presente trabajo tiene como objetivo realizar un análisis estadístico completo
+sobre un conjunto de datos relacionado con el desempeño académico de estudiantes,
+el cual contiene 10,000 registros y 6 variables que recogen hábitos de estudio,
+descanso, práctica previa y participación extracurricular. Entre estas variables
+se encuentran las horas dedicadas al estudio (`Hours Studied`), las calificaciones
+obtenidas previamente (`Previous Scores`), la participación en actividades
+extracurriculares (`Extracurricular Activities`), las horas diarias de sueño
+(`Sleep Hours`) y la cantidad de cuestionarios de práctica resueltos
+(`Sample Question Papers Practiced`), con el fin de comprender su comportamiento
+y su relación con el índice de rendimiento académico (`Performance Index`), que
+constituye la variable respuesta principal del estudio.
+
+Este tipo de análisis resulta relevante dentro del ámbito educativo, ya que permite
+cuantificar de manera objetiva qué factores académicos y hábitos personales tienen
+un impacto real sobre el desempeño estudiantil, distinguiendo entre variables con
+alta capacidad explicativa individual (como las calificaciones previas y las horas
+de estudio) y factores cuyo aporte es más sutil o solo se aprecia claramente al
+controlar simultáneamente por el resto de las características del estudiante.
+
+Para alcanzar este objetivo, se lleva a cabo inicialmente un análisis exploratorio
+de datos (EDA), que permite conocer la estructura del dataset, verificar la
+integridad de los registros (confirmando la ausencia de valores faltantes),
+convertir la variable categórica `Extracurricular Activities` a factor, y
+caracterizar tanto las variables numéricas como categóricas de forma individual,
+así como en conjunto con la variable respuesta y entre sí.
+
+A partir de los patrones detectados durante esta etapa exploratoria —entre ellos
+una distribución simétrica y platicúrtica en `Performance Index`, distribuciones
+uniformes en las variables predictoras numéricas, una fuerte asociación lineal
+positiva entre `Previous Scores` y `Performance Index`, una asociación moderada
+con `Hours Studied`, y ausencia de correlación entre los predictores— se plantean
+pruebas de hipótesis formales para confirmar estadísticamente estas relaciones
+y medir su magnitud mediante tamaños del efecto.
+
+Finalmente, en una tercera etapa se construye un modelo de regresión lineal
+múltiple que incorpora todos los predictores de forma conjunta, con el fin de
+evaluar cuánto mejora la predicción respecto a un modelo simple o al promedio
+general, seleccionar el mejor subconjunto de variables y validar el cumplimiento
+de los supuestos clásicos del modelo lineal.
+
+## Objetivo general
+
+Predecir el índice de rendimiento académico (`Performance Index`) a partir de los hábitos de estudio, descanso, práctica y antecedentes académicos de los estudiantes. Para ello, primero se evalúa qué variables presentan una asociación estadísticamente significativa y prácticamente relevante con el rendimiento, y luego se construye y evalúa un modelo de regresión lineal múltiple que las incorpore de forma conjunta.
+
+Este enfoque parte de una distinción central a lo largo del trabajo: la significancia estadística y la relevancia práctica no son lo mismo. Dado el tamaño de la muestra (10,000 observaciones), diferencias pequeñas entre grupos o correlaciones muy débiles pueden resultar estadísticamente significativas, por lo que responder únicamente si una prueba rechaza o no rechaza $H_0$ sería insuficiente sin acompañar cada contraste con una medida de tamaño del efecto.
+
+## Objetivos específicos
+
+1. Caracterizar la estructura del conjunto de datos, verificando la integridad de sus 10,000 registros y 6 variables y confirmando la ausencia de valores faltantes.
+2. Describir, mediante análisis univariado y bivariado, el comportamiento de las 5 variables predictoras (1 categórica y 4 numéricas) y su relación visual con `Performance Index`.
+3. Verificar los supuestos de normalidad y de homogeneidad de varianzas para seleccionar, en cada caso, la prueba de hipótesis paramétrica o no paramétrica adecuada.
+4. Contrastar mediante pruebas de hipótesis la asociación entre cada variable predictora y `Performance Index`.
+5. Cuantificar la relevancia práctica de las asociaciones detectadas mediante medidas de tamaño del efecto ($r$ de Wilcoxon y $\rho$ de Spearman) e intervalos de confianza para $\rho$.
+6. Evaluar las relaciones entre las variables predictoras numéricas (6 pares de variables) para descartar posibles problemas de multicolinealidad.
+7. Ajustar un modelo de regresión lineal múltiple, seleccionar las variables mediante métodos secuenciales y validar los supuestos del modelo.
+8. Evaluar la capacidad predictiva del modelo final en un conjunto de prueba y compararla con la de modelos alternativos.
+
+## Metodología
+
+El análisis se desarrolló en el lenguaje R mediante un enfoque cuantitativo, descriptivo e inferencial, y se organizó en cuatro etapas.
+
+**Etapa 1. Preparación de los datos.** Se trabajó con 10,000 registros y 6 variables. Se verificó la presencia de valores faltantes en todas las columnas, comprobando que el conjunto de datos está 100 % completo (0 valores `NA`). La variable categórica `Extracurricular Activities` se convirtió a factor con niveles `"No"` y `"Yes"`.
+
+**Etapa 2. Análisis exploratorio (EDA).** Se resumieron las variables numéricas con medidas de tendencia central, dispersión, asimetría y curtosis. Se construyeron histogramas, diagramas de barras y boxplots para el análisis univariado, y diagramas de dispersión, boxplots agrupados y una matriz de correlación de Spearman para el análisis bivariado frente a `Performance Index` y entre predictores. Todos los gráficos, tablas y estimaciones del EDA se calcularon con los 10,000 registros.
+
+**Etapa 3. Inferencia estadística.** Todas las pruebas se realizaron con un nivel de significancia $\alpha = 0.05$ (confianza del 95 %), siguiendo este esquema:
+
+1. *Normalidad.* Se aplicó la prueba de Lilliefors a cada grupo o variable, ya que, a diferencia de Shapiro-Wilk, no tiene límite de 5,000 observaciones.
+2. *Homogeneidad de varianzas.* Se utilizó la prueba de Levene (centrada en la mediana) en la comparación entre grupos de `Extracurricular Activities`.
+3. *Selección de la prueba.*
+   - Categórica de dos niveles frente a `Performance Index`: prueba t de Student si hay normalidad, o Mann-Whitney-Wilcoxon en caso contrario.
+   - Dos variables numéricas: correlación de Pearson si ambas variables son normales, o de Spearman en caso contrario, con un intervalo de confianza del 95 % para $\rho$ basado en la transformación de Fisher con el error estándar de Bonett y Wright.
+4. *Tamaño del efecto.* Se calculó $r$ (Mann-Whitney-Wilcoxon) y $\rho$ (Spearman), para evaluar la relevancia práctica más allá del p valor.
+5. *Criterio de decisión.* Una variable se considera relevante a nivel individual solo si cumple ambos criterios: rechazo de $H_0$ y tamaño del efecto no despreciable.
+
+Como el supuesto de normalidad univariada no se cumplió en ninguna variable debido a sus formas uniformes o platicúrticas, las hipótesis de las pruebas no paramétricas se plantean en términos de medianas o de igualdad de distribuciones, según corresponda.
+
+**Etapa 4. Regresión lineal múltiple.** Los registros se dividieron aleatoriamente en entrenamiento (80 %, 8,000 estudiantes) y prueba (20 %, 2,000 estudiantes). Se compararon seis procedimientos con validación cruzada de cinco pliegues en entrenamiento, calculando las referencias de preprocesamiento dentro de cada pliegue. El rendimiento final se midió en prueba mediante RMSE, MAE y un $R^2$ predictivo frente al promedio de entrenamiento. Para describir el modelo se informan tamaños de efecto, intervalos de confianza robustos HC1 y diagnósticos de residuos. Box–Cox se examina como diagnóstico adicional.

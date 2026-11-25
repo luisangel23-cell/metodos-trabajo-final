@@ -1,0 +1,1870 @@
+# Análisis Exploratorio de Datos (EDA) {#intro}
+
+Primeramente, realizaremos un análisis exploratorio de los datos para comprender la estructura, distribución y relaciones presentes en el conjunto de rendimiento estudiantil.
+
+Librerías
+```{r librerias, message=FALSE, warning=FALSE}
+if (.Platform$OS.type == "windows") {
+  invisible(Sys.setlocale("LC_CTYPE", "Spanish_Colombia.utf8"))
+}
+
+library(tidyverse)
+library(Amelia)
+library(moments)
+library(ggplot2)
+library(patchwork)
+library(GGally)
+library(readr)
+library(dplyr)
+library(car)
+library(rstatix)
+library(coin)
+library(nortest)
+library(knitr)
+library(kableExtra)
+options(knitr.table.format = "html")
+library(broom)
+```
+
+```{r funciones-tablas, include=FALSE}
+# Tabla general con estilo
+tabla <- function(x, caption = NULL, digits = 4) {
+  x %>%
+    kable(caption = caption, digits = digits, align = "c") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  full_width = FALSE, position = "center") %>%
+    row_spec(0, bold = TRUE)
+}
+
+# Para pruebas tipo htest: lillie.test, kruskal.test, cor.test, chisq.test
+tabla_test <- function(test, caption = NULL) {
+  res <- broom::tidy(test)
+  res$p.value <- ifelse(res$p.value < 0.001, "< 0.001",
+                        format(round(res$p.value, 4), nsmall = 4))
+  res <- res %>% mutate(across(where(is.numeric), ~ round(.x, 4)))
+  tabla(res, caption)
+}
+
+# Para leveneTest
+tabla_levene <- function(lev, caption = NULL) {
+  res <- as.data.frame(lev) %>%
+    tibble::rownames_to_column("Fuente")
+  res$Fuente <- c("Grupo", "Residuos")
+  colnames(res) <- c("Fuente", "gl", "Estadístico F", "p valor")
+  res$`p valor` <- ifelse(is.na(res$`p valor`), "",
+                          ifelse(res$`p valor` < 0.001, "< 0.001",
+                                 format(round(res$`p valor`, 4), nsmall = 4)))
+  tabla(res, caption, digits = 3)
+}
+```
+
+```{r}
+etiq_hist <- function(bins = NULL, binwidth = NULL, boundary = NULL, size = 2.6) {
+  list(
+    geom_text(stat = "bin", bins = bins, binwidth = binwidth, boundary = boundary,
+              aes(y = after_stat(count),
+                  label = ifelse(after_stat(count) == 0, "",
+                                 scales::comma(after_stat(count)))),
+              angle = 90, hjust = -0.15, vjust = 0.5, size = size),
+    scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.16)))
+  )
+}
+
+etiq_barras <- function(size = 3.2) {
+  list(
+    geom_text(stat = "count",
+              aes(label = scales::comma(after_stat(count))),
+              vjust = -0.4, size = size),
+    scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.12)))
+  )
+}
+
+etiq_box <- function(size = 2.8) {
+  q <- function(p) function(y) unname(quantile(y, p))
+  etiqueta <- function(f) {
+    stat_summary(fun = f, geom = "text",
+                 aes(label = format(round(after_stat(y), 1), big.mark = ",",
+                                    trim = TRUE, drop0trailing = TRUE)),
+                 position = position_nudge(x = 0.4), hjust = 0, size = size)
+  }
+  list(etiqueta(q(0.25)), etiqueta(median), etiqueta(q(0.75)))
+}
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+theme_set(theme_bw())
+```
+
+Importemos el dataframe
+
+
+```{r dataframe}
+df <- data.table::fread("data/Student_Performance.csv")
+df <- as.data.frame(df)
+
+```
+
+```{r}
+df <- df %>%
+  mutate(across(where(is.character), ~ na_if(., "")))
+```
+
+Ver las primeras 5 filas 
+```{r filas}
+head(df, n = 5) %>%
+  kable(caption = "Primeras 5 filas del dataset", align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE) %>%
+  scroll_box(width = "100%")
+```
+
+Ver la estructura de los datos
+```{r str}
+tibble(
+  Variable = names(df),
+  Tipo = sapply(df, function(x) class(x)[1]),
+  `Primeros valores` = sapply(df, function(x) paste(head(as.character(x), 5), collapse = ", "))
+) %>%
+  kable(caption = paste0("Estructura del dataset: ", format(nrow(df), big.mark = ","),
+                         " observaciones y ", ncol(df), " variables"),
+        align = "lcl") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE)
+```
+
+
+## Clasificación de las variables
+
+Con base en la estructura anterior, las variables del dataset se clasifican según su naturaleza. Todas las variables disponibles aportan información relevante sobre los hábitos de estudio o el desempeño académico del estudiante, por lo que no se excluye ninguna columna.
+
+```{r clasificacion}
+categoricas <- tibble(
+  Variable = c("Extracurricular Activities"),
+  Subtipo = c("Nominal (dicotómica)"),
+  Categorías = c("No, Yes")
+)
+
+categoricas %>%
+  kable(caption = "Variables categóricas (1)", align = "lcl") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE)
+```
+
+```{r clasificacion-num}
+numericas <- tibble(
+  Variable = c("Hours Studied", "Previous Scores", "Sleep Hours",
+               "Sample Question Papers Practiced", "Performance Index"),
+  Subtipo = c("Discreta (entera)", "Continua / entera",
+              "Discreta (entera)", "Discreta (conteo)", "Continua"),
+  Rol = c(rep("Predictora", 4), "Respuesta")
+)
+
+numericas %>%
+  kable(caption = "Variables numéricas (5)", align = "lcc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE)
+```
+
+En total, el dataset contiene 10,000 observaciones y 6 variables: 1 categórica y 5 numéricas (de las cuales Performance Index es la variable respuesta). Por lo tanto, se dispone de 5 variables predictoras: 1 categórica y 4 numéricas.
+
+
+## Revisión de datos faltantes en las variables 
+
+Veamos si existen valores faltantes en las variables del conjunto de datos.
+
+```{r faltantes1.11}
+df %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Datos faltantes") %>%
+  mutate(`Porcentaje (%)` = round(`Datos faltantes` / nrow(df) * 100, 2)) %>%
+  kable(caption = "Datos faltantes por variable",
+        format.args = list(big.mark = ","), align = "lcc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE)
+```
+
+
+El análisis de valores faltantes muestra que todas las variables —tanto las 5 numéricas (Hours Studied, Previous Scores, Sleep Hours, Sample Question Papers Practiced y Performance Index) como la categórica (Extracurricular Activities)— están completamente diligenciadas (0 datos faltantes, 0 %).
+
+Verificamos de forma desagregada las variables numéricas y categóricas para dejar constancia de su integridad antes de transformar tipos de datos.
+
+```{r faltantes2.22}
+  df %>%
+    select(where(is.numeric)) %>%
+    summarise(across(everything(), ~ sum(is.na(.)), .names = "NA_{.col}"))
+```
+  
+```{r faltantes3.33}
+  df %>%
+    select(where(is.character)) %>%
+    summarise(across(everything(), ~ sum(is.na(.)), .names = "NA_{.col}"))
+```
+  
+  Al no registrarse ningún valor faltante en el dataset, no es necesario aplicar técnicas de imputación en esta etapa, conservando intactos los 10,000 registros originales.
+
+## Conversión de variables de tipo carácter a factor
+
+El paso siguiente es convertir la variable de tipo carácter (character) a factor (factor), que es el tipo de dato que R utiliza para representar variables categóricas, facilitando las tablas de frecuencia, los gráficos y las pruebas estadísticas.
+
+```{r}
+df <- df %>%
+  mutate(
+    `Extracurricular Activities` = factor(`Extracurricular Activities`,
+                                          levels = c("No", "Yes"))
+  )
+```
+
+Se convirtió a factor la variable Extracurricular Activities con los niveles "No" y "Yes". Todos los gráficos, tablas, estimaciones y pruebas de hipótesis se calculan con los 10,000 registros del conjunto de datos, sin submuestreo.
+
+## Análisis de la variable respuesta (Performance Index)
+
+Antes de analizar las variables independientes, se caracteriza por completo la variable respuesta del estudio, Performance Index, ya que es la variable con la que se compararán todas las demás.
+
+### Resumen estadístico
+
+```{r resumen-respuesta}
+df %>%
+  summarise(
+    n = n(),
+    media = mean(`Performance Index`),
+    sd = sd(`Performance Index`),
+    mediana = median(`Performance Index`),
+    RIC = IQR(`Performance Index`),
+    Q1 = quantile(`Performance Index`, 0.25),
+    Q3 = quantile(`Performance Index`, 0.75),
+    mínimo = min(`Performance Index`),
+    máximo = max(`Performance Index`),
+    asimetría = skewness(`Performance Index`),
+    curtosis = kurtosis(`Performance Index`)
+  ) %>%
+  pivot_longer(everything(), names_to = "Estadístico", values_to = "Valor") %>%
+  kable(caption = "Resumen estadístico de Performance Index", digits = 2,
+        format.args = list(big.mark = ","), align = "lc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE)
+```
+
+El resumen muestra que Performance Index tiene una media de 55.22 y una mediana prácticamente idéntica de 55.00, con una asimetría cercana a cero (-0.00), lo que indica una distribución altamente simétrica alrededor del centro. Su desviación estándar es de 19.21 puntos y el rango intercuartílico es de 31.00 puntos (entre Q1 = 40.00 y Q3 = 71.00), abarcando valores desde un mínimo de 10.00 hasta un máximo de 100.00. La curtosis de 2.14 (menor que 3) sugiere una distribución platicúrtica, es decir, más aplanada en el centro y con colas más ligeras que una distribución normal.
+
+### Distribución
+
+```{r histograma-respuesta}
+ggplot(df, aes(x = `Performance Index`)) +
+  geom_histogram(bins = 30, fill = "#AEC6CF", color = "white") + etiq_hist(bins = 30) +
+  labs(title = "Distribución de Performance Index", x = "Performance Index", y = "Frecuencia")
+```
+
+
+El histograma muestra que Performance Index presenta una distribución simétrica y acampanada, pero notablemente amplia y aplanada en su zona central (entre 35 y 75 puntos), donde la mayoría de los intervalos reúne entre 400 y 650 estudiantes. Hacia ambos extremos (por debajo de 25 y por encima de 85 puntos) la frecuencia desciende de manera simétrica y gradual hasta los límites de 10 y 100 puntos, sin colas largas ni sesgos pronunciados.
+
+
+### Valores atípicos
+
+```{r boxplot-respuesta}
+ggplot(df, aes(x = "", y = `Performance Index`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Boxplot de Performance Index", y = "Performance Index")
+```
+
+El boxplot de Performance Index confirma la simetría observada en el histograma y la ausencia total de valores atípicos. La caja, que contiene el 50 % central de los estudiantes, se extiende exactamente entre 40 y 71 puntos, con la mediana ubicada en 55. Los bigotes cubren todo el rango observado, desde 10 hasta 100 puntos, sin ningún punto fuera de ellos.
+
+### Conclusión sobre la variable respuesta
+
+En conclusión, Performance Index es una variable continua, simétrica (media de 55.22 y mediana de 55.00), acotada entre 10 y 100 puntos, sin valores atípicos y con forma platicúrtica (curtosis de 2.14). Aunque su simetría es notable, su achatamiento central y el tamaño muestral de 10,000 registros hacen que se desvíe de una distribución normal teórica, lo que se verificará formalmente en el capítulo de inferencia estadística.
+
+## Resumen de las demás variables numéricas
+
+Ahora se resumen las variables numéricas restantes, que constituyen las cuatro predictoras numéricas del estudio.
+
+```{r resumen-numericas}
+df %>%
+  select(where(is.numeric), -`Performance Index`) %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "valor") %>%
+  group_by(variable) %>%
+  summarise(
+    n = length(valor),
+    media = mean(valor),
+    sd = sd(valor),
+    mediana = median(valor),
+    RIC = IQR(valor),
+    Q1 = quantile(valor, 0.25),
+    Q3 = quantile(valor, 0.75),
+    mínimo = min(valor),
+    máximo = max(valor),
+    asimetría = skewness(valor),
+    curtosis = kurtosis(valor)
+  ) %>%
+  kable(caption = "Resumen estadístico de las variables numéricas predictoras",
+        digits = 2, format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center", font_size = 12) %>%
+  row_spec(0, bold = TRUE)
+```
+
+La tabla presenta las medidas descriptivas de las cuatro predictoras numéricas. Todas muestran una simetría muy cercana a cero y una curtosis próxima a 1.75–1.79, valor característico de distribuciones uniformes discretas:
+
+Hours Studied tiene una media de 4.99 horas y una mediana de 5.00, con valores enteros entre 1 y 9 horas.
+
+Previous Scores registra una media de 69.45 puntos y una mediana de 69.00, con desviación estándar de 17.34 y rango de 40 a 99 puntos.
+
+Sleep Hours presenta una media de 6.53 horas y una mediana de 7.00, abarcando de 4 a 9 horas diarias.
+
+Sample Question Papers Practiced tiene una media de 4.58 cuestionarios y una mediana de 5.00, variando entre 0 y 9 cuestionarios practicados.
+
+
+
+## Análisis de las variables independientes (características)
+
+Ahora analizaremos cada variable predictora de forma individual, comenzando por las cuatro variables numéricas y continuando con la variable categórica.
+
+Variable Hours Studied:
+
+```{r}
+ggplot(df, aes(x = `Hours Studied`)) +
+  geom_histogram(binwidth = 1, boundary = 0.5, fill = "#AEC6CF", color = "white") +
+  etiq_hist(binwidth = 1, boundary = 0.5) +
+  scale_x_continuous(breaks = 1:9) +
+  labs(title = "Distribución de Hours Studied", x = "Hours Studied", y = "Frecuencia")
+```
+
+La distribución de Hours Studied es prácticamente uniforme discreta entre 1 y 9 horas: cada valor entero reúne entre 1,085 y 1,152 estudiantes (alrededor del 11 % de la muestra por cada nivel), sin picos ni sesgos hacia ningún extremo.
+
+
+```{r}
+ggplot(df, aes(x = "", y = `Hours Studied`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Boxplot de Hours Studied", y = "Hours Studied")
+```
+
+El boxplot confirma la ausencia de valores atípicos: los bigotes abarcan de 1 a 9 horas, la caja central va de 3 a 7 horas y la mediana se ubica exactamente en 5 horas, reflejando una distribución perfectamente equilibrada.
+
+
+Variable Previous Scores:
+
+```{r}
+ggplot(df, aes(x = `Previous Scores`)) +
+  geom_histogram(bins = 30, fill = "#AEC6CF", color = "white") + etiq_hist(bins = 30) +
+  labs(title = "Distribución de Previous Scores", x = "Previous Scores", y = "Frecuencia")
+```
+
+La distribución de Previous Scores se muestra uniforme a lo largo de todo su rango entre 40 y 99 puntos. Cada barra reúne entre 290 y 370 registros aproximadamente, lo que indica que las calificaciones previas de los estudiantes se reparten de manera homogénea sin concentrarse en un tramo específico.
+
+
+```{r}
+ggplot(df, aes(x = "", y = `Previous Scores`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Boxplot de Previous Scores", y = "Previous Scores")
+```
+
+
+El boxplot de Previous Scores no presenta valores atípicos: los bigotes cubren de 40 a 99 puntos, la caja central abarca de 54 a 85 puntos y la mediana se sitúa en 69 puntos, corroborando la simetría de la variable.
+
+
+Variable Sleep Hours:
+
+```{r}
+ggplot(df, aes(x = `Sleep Hours`)) +
+  geom_histogram(binwidth = 1, boundary = 3.5, fill = "#AEC6CF", color = "white") +
+  etiq_hist(binwidth = 1, boundary = 3.5) +
+  scale_x_continuous(breaks = 4:9) +
+  labs(title = "Distribución de Sleep Hours", x = "Sleep Hours", y = "Frecuencia")
+```
+
+Las seis categorías enteras de Sleep Hours (de 4 a 9 horas) muestran frecuencias muy parejas, entre 1,606 y 1,804 estudiantes cada una. El valor de 8 horas presenta una frecuencia ligeramente superior (1,804 registros), pero en general los hábitos de descanso se reparten de manera uniforme.
+
+
+```{r}
+ggplot(df, aes(x = "", y = `Sleep Hours`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Boxplot de Sleep Hours", y = "Sleep Hours")
+```
+
+El boxplot de Sleep Hours no muestra valores atípicos: los bigotes van de 4 a 9 horas, el 50 % central de los estudiantes duerme entre 5 y 8 horas, y la mediana se ubica en 7 horas.
+
+Variable Sample Question Papers Practiced:
+
+```{r}
+ggplot(df, aes(x = `Sample Question Papers Practiced`)) +
+  geom_histogram(binwidth = 1, boundary = -0.5, fill = "#AEC6CF", color = "white") +
+  etiq_hist(binwidth = 1, boundary = -0.5) +
+  scale_x_continuous(breaks = 0:9) +
+  labs(title = "Distribución de Sample Question Papers Practiced",
+       x = "Sample Question Papers Practiced", y = "Frecuencia")
+```
+
+La distribución de Sample Question Papers Practiced es uniforme discreta entre 0 y 9 cuestionarios practicados, con frecuencias entre 930 y 1,059 estudiantes en cada nivel. No existe concentración en cero ni sesgo hacia valores altos.
+
+```{r}
+ggplot(df, aes(x = "", y = `Sample Question Papers Practiced`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Boxplot de Sample Question Papers Practiced",
+       y = "Sample Question Papers Practiced")
+```
+
+El boxplot confirma que no hay valores atípicos: los bigotes cubren todo el rango de 0 a 9 cuestionarios, la caja va de 2 a 7 y la mediana se ubica en 5 cuestionarios practicados.
+
+
+Continuaremos con la variable categórica del dataset.
+
+Variable Extracurricular Activities:
+```{r}
+ggplot(df, aes(x = `Extracurricular Activities`)) +
+  geom_bar(fill = "#AEC6CF") + etiq_barras() +
+  labs(title = "Distribución de Extracurricular Activities",
+       x = "Extracurricular Activities", y = "Frecuencia")
+```
+
+
+La proporción de estudiantes que participan y que no participan en actividades extracurriculares está prácticamente equilibrada: 5,052 estudiantes (50.52 %) responden "No" y 4,948 estudiantes (49.48 %) responden "Yes". No existe desbalance entre categorías.
+
+
+Una vez caracterizadas las variables de forma individual, se analiza cómo se relacionan con la variable respuesta, Performance Index, con el fin de identificar patrones visuales que luego serán contrastados formalmente.
+
+
+Hours Studied vs Performance Index:
+```{r}
+ggplot(df, aes(x = `Hours Studied`, y = `Performance Index`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 1:9) +
+  labs(title = "Hours Studied vs Performance Index",
+       x = "Hours Studied", y = "Performance Index")
+```
+
+Se observa una tendencia ascendente clara: a medida que aumentan las horas de estudio de 1 a 9, toda la franja de valores de Performance Index se desplaza hacia arriba. Mientras que con 1 hora de estudio los índices se concentran aproximadamente entre 10 y 75 puntos, con 9 horas de estudio se ubican entre 35 y 100 puntos, evidenciando una relación positiva moderada.
+
+
+Previous Scores vs Performance Index:
+```{r}
+ggplot(df, aes(x = `Previous Scores`, y = `Performance Index`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  labs(title = "Previous Scores vs Performance Index",
+       x = "Previous Scores", y = "Performance Index")
+```
+
+Se aprecia una relación lineal positiva muy marcada y estrecha entre Previous Scores y Performance Index. Los puntos forman una banda diagonal ascendente bien definida: los estudiantes con calificaciones previas cercanas a 40 obtienen índices alrededor de 10–40 puntos, mientras que quienes tienen calificaciones previas cercanas a 99 alcanzan índices entre 70 y 100 puntos. Esta variable se perfila visualmente como el predictor individual más fuerte del rendimiento académico.
+
+
+Sleep Hours vs Performance Index:
+
+```{r}
+ggplot(df, aes(x = `Sleep Hours`, y = `Performance Index`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 4:9) +
+  labs(title = "Sleep Hours vs Performance Index",
+       x = "Sleep Hours", y = "Performance Index")
+```
+
+
+Para cada cantidad de horas de sueño (de 4 a 9), los valores de Performance Index cubren prácticamente el mismo rango (de 10 a 100 puntos) con una distribución vertical muy similar, sin que se distinga a simple vista una pendiente pronunciada.
+
+Sample Question Papers Practiced vs Performance Index:
+
+```{r}
+ggplot(df, aes(x = `Sample Question Papers Practiced`, y = `Performance Index`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 0:9) +
+  labs(title = "Sample Question Papers Practiced vs Performance Index",
+       x = "Sample Question Papers Practiced", y = "Performance Index")
+```
+
+De manera similar a Sleep Hours, las diez columnas correspondientes a 0 hasta 9 cuestionarios practicados presentan rangos y densidades verticales muy parecidos en Performance Index, lo que sugiere que, analizada de forma aislada, esta variable muestra una asociación visualmente débil con el rendimiento.
+
+Extracurricular Activities vs Performance Index:
+
+```{r}
+ggplot(df, aes(x = `Extracurricular Activities`, y = `Performance Index`)) +
+  geom_boxplot(fill = "#AEC6CF") + etiq_box() +
+  labs(title = "Performance Index según Extracurricular Activities",
+       x = "Extracurricular Activities", y = "Performance Index")
+```
+
+Los boxplots de ambos grupos lucen prácticamente idénticos: la mediana se sitúa en 55 puntos tanto para "No" como para "Yes", mientras que los cuartiles apenas varían en 1 punto (de 40 a 70 en "No", frente a 41 a 71 en "Yes"). Visualmente, la participación en actividades extracurriculares no produce una separación marcada en el rendimiento cuando se observa sin controlar por las demás variables.
+
+
+Apéndice gráfico de asociaciones entre predictores
+
+
+Se presenta la matriz de correlación y dispersión de las variables numéricas, calculada con los 10,000 registros. Como las variables no siguen una distribución normal, la correlación mostrada es la de Spearman.
+
+```{r}
+df_num <- df %>% select(where(is.numeric))
+
+dispersion_densidad <- function(data, mapping, ...) {
+  ggplot(data = data, mapping = mapping) +
+    geom_bin2d(bins = 30) +
+    scale_fill_gradient(low = "#D6E4EA", high = "#2C4A5E", guide = "none")
+}
+
+grafico_spearman <- GGally::ggpairs(
+  df_num,
+  upper = list(continuous = GGally::wrap("cor", method = "spearman",
+                                         title = "Spearman", stars = FALSE, size = 3.5)),
+  lower = list(continuous = dispersion_densidad),
+  diag  = list(continuous = GGally::wrap("densityDiag", fill = "#AEC6CF")),
+  progress = FALSE
+) +
+  theme(axis.text = element_text(size = 7), strip.text = element_text(size = 8))
+
+suppressWarnings(suppressMessages(print(grafico_spearman)))
+```
+
+La matriz de correlación resume con claridad la estructura del dataset: por un lado, Performance Index presenta una correlación muy fuerte con Previous Scores ($\rho_s = 0.921$) y moderada con Hours Studied ($\rho_s = 0.352$), además de correlaciones muy bajas pero positivas con Sleep Hours ($\rho_s = 0.045$) y Sample Question Papers Practiced ($\rho_s = 0.041$). Por otro lado, entre las cuatro variables predictoras numéricas todos los coeficientes de correlación son prácticamente cero ($|\rho_s| \le 0.017$), lo que anticipa independencia entre regresores y ausencia de multicolinealidad.
+
+A continuación se inspeccionan individualmente los 6 pares posibles entre las variables predictoras numéricas.
+
+Hours Studied vs Previous Scores:
+
+```{r}
+ggplot(df, aes(x = `Hours Studied`, y = `Previous Scores`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 1:9) +
+  labs(title = "Hours Studied vs Previous Scores",
+       x = "Hours Studied", y = "Previous Scores")
+```
+
+Las nueve franjas verticales correspondientes a cada hora de estudio muestran una distribución uniforme de Previous Scores entre 40 y 99 puntos, sin tendencia ascendente ni descendente ($\rho_s = -0.0125$).
+
+Hours Studied vs Sleep Hours:
+
+```{r}
+ggplot(df, aes(x = `Hours Studied`, y = `Sleep Hours`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(breaks = 4:9) +
+  labs(title = "Hours Studied vs Sleep Hours",
+       x = "Hours Studied", y = "Sleep Hours")
+```
+
+Se observa una cuadrícula uniforme de $9 \times 6$ combinaciones enteras, lo que indica que las horas de estudio y las horas de sueño son independientes entre sí ($\rho_s = 0.0012$).
+
+Hours Studied vs Sample Question Papers Practiced:
+
+```{r}
+ggplot(df, aes(x = `Hours Studied`, y = `Sample Question Papers Practiced`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(breaks = 0:9) +
+  labs(title = "Hours Studied vs Sample Question Papers Practiced",
+       x = "Hours Studied", y = "Sample Question Papers Practiced")
+```
+
+Nuevamente se forma una cuadrícula uniforme de $9 \times 10$ puntos sin concentración en ninguna diagonal ($\rho_s = 0.0173$), confirmando ausencia de asociación entre ambas variables.
+
+Previous Scores vs Sleep Hours:
+
+```{r}
+ggplot(df, aes(x = `Previous Scores`, y = `Sleep Hours`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_y_continuous(breaks = 4:9) +
+  labs(title = "Previous Scores vs Sleep Hours",
+       x = "Previous Scores", y = "Sleep Hours")
+```
+
+Se distinguen seis líneas horizontales bien definidas (de 4 a 9 horas de sueño) a lo largo de todo el rango de Previous Scores (40 a 99), sin ningún patrón de dependencia ($\rho_s = 0.0060$).
+
+Previous Scores vs Sample Question Papers Practiced:
+
+```{r}
+ggplot(df, aes(x = `Previous Scores`, y = `Sample Question Papers Practiced`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_y_continuous(breaks = 0:9) +
+  labs(title = "Previous Scores vs Sample Question Papers Practiced",
+       x = "Previous Scores", y = "Sample Question Papers Practiced")
+```
+
+Las diez líneas horizontales correspondientes a 0 hasta 9 cuestionarios practicados se extienden de forma homogénea a lo largo de todo el rango de calificaciones previas ($\rho_s = 0.0079$).
+
+Sleep Hours vs Sample Question Papers Practiced:
+
+```{r}
+ggplot(df, aes(x = `Sleep Hours`, y = `Sample Question Papers Practiced`)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.2) +
+  scale_x_continuous(breaks = 4:9) +
+  scale_y_continuous(breaks = 0:9) +
+  labs(title = "Sleep Hours vs Sample Question Papers Practiced",
+       x = "Sleep Hours", y = "Sample Question Papers Practiced")
+```
+
+Se observa una cuadrícula discreta uniforme de $6 \times 10$ combinaciones sin ningún patrón de asociación ($\rho_s = 0.0041$).
+
+En conjunto, el análisis bivariado entre regresores confirma que las cuatro variables numéricas predictoras son prácticamente independientes entre sí, descartando redundancias entre ellas.
+
+```{r}
+df <- dplyr::rename(
+  df,
+  Hours_Studied = `Hours Studied`,
+  Previous_Scores = `Previous Scores`,
+  Extracurricular_Activities = `Extracurricular Activities`,
+  Sleep_Hours = `Sleep Hours`,
+  Sample_Question_Papers_Practiced = `Sample Question Papers Practiced`,
+  Performance_Index = `Performance Index`
+)
+```
+
+# Pruebas de hipótesis paramétricas y no paramétricas
+
+Una vez finalizado el análisis exploratorio de los datos, se plantea y resuelve un conjunto de 11 preguntas mediante pruebas de hipótesis formales con un nivel de significancia $\alpha = 0.05$ (confianza del 95 %), con el objetivo de verificar estadísticamente tanto la relación de cada una de las 5 variables predictoras con Performance Index (Preguntas 1 a 5) como la independencia entre los 6 pares de variables numéricas predictoras (Preguntas 6 a 11). Todas las pruebas se calculan con los 10,000 registros.
+
+En las pruebas de correlación de Spearman se calcula además un intervalo de confianza del 95 % para el coeficiente $\rho$ mediante la transformación de Fisher con el error estándar de Bonett y Wright, donde $r_s$ es el coeficiente muestral y $n$ el número de observaciones:
+
+$$
+z = \operatorname{arctanh}(r_s), \qquad EE = \sqrt{\frac{1 + r_s^2/2}{n - 3}}, \qquad IC_{95\%} = \tanh\left(z \pm z_{0.975}\,EE\right)
+$$
+
+```{r funciones-ic}
+ICS <- list()
+
+ic_spearman <- function(x, y, id, conf = 0.95) {
+  n   <- length(x)
+  rho <- cor(x, y, method = "spearman")
+  ee  <- sqrt((1 + rho^2 / 2) / (n - 3))
+  q   <- qnorm(1 - (1 - conf) / 2)
+  lim <- tanh(atanh(rho) + c(-1, 1) * q * ee)
+  S   <- (n^3 - n) * (1 - rho) / 6
+  t   <- rho * sqrt((n - 2) / (1 - rho^2))
+  p   <- 2 * pt(-abs(t), df = n - 2)
+  ICS[[id]] <<- c(rho = rho, S = S, p = p, inferior = lim[1], superior = lim[2])
+  data.frame(rho = rho, inferior = lim[1], superior = lim[2])
+}
+```
+
+```{r funciones-texto, include=FALSE}
+fm <- function(x, d = 4) formatC(as.numeric(x), format = "f", digits = d)
+
+fp <- function(p) {
+  p <- as.numeric(p)
+  if (p < 0.001) "$< 0.001$" else paste0("$= ", formatC(p, format = "f", digits = 4), "$")
+}
+
+fS <- function(S) {
+  S <- as.numeric(S)
+  e <- floor(log10(S))
+  paste0(formatC(S / 10^e, format = "f", digits = 4), " \\times 10^{", e, "}")
+}
+fmil <- function(x, d = 0) formatC(as.numeric(x), format = "f", digits = d, big.mark = ",")
+
+txt_ic <- function(id) {
+  v <- ICS[[id]]
+  inf <- as.numeric(v["inferior"])
+  sup <- as.numeric(v["superior"])
+  cero <- inf <= 0 & sup >= 0
+  paste0("Con una confianza del 95%, el intervalo de confianza para $\\rho$ es $(",
+         fm(inf), ", ", fm(sup), ")$, que ",
+         ifelse(cero, "contiene", "no contiene"), " al 0",
+         ifelse(max(abs(c(inf, sup))) < 0.1,
+                " y cuyos límites quedan a menos de $0.1$ de distancia del 0.", "."))
+}
+
+txt_cor <- function(id) {
+  v <- ICS[[id]]
+  vars <- strsplit(id, " - ")[[1]]
+  sig <- as.numeric(v["p"]) < 0.05
+  rho_abs <- abs(as.numeric(v["rho"]))
+  paste0("Con una confianza del 95%, la prueba de correlación de Spearman indica que ",
+         ifelse(sig, "existe", "no existe"),
+         " una correlación estadísticamente significativa entre ", vars[1], " y ", vars[2],
+         " ($S = ", fS(v["S"]), "$, p valor ", fp(v["p"]), ", $\\rho = ", fm(v["rho"]), "$), por lo que ",
+         ifelse(sig, "se rechaza", "no se rechaza"), " $H_0$. ",
+         ifelse(sig & rho_abs < 0.1,
+                "Sin embargo, el valor del coeficiente es muy bajo, lo que indica que, a pesar de ser significativa desde el punto de vista estadístico, la relación entre ambas variables es prácticamente nula en términos prácticos a nivel individual. ",
+                ""),
+         txt_ic(id))
+}
+```
+
+
+```{r tablas-pruebas, include=FALSE}
+fmt_p <- function(p) {
+  p <- as.numeric(p)
+  ifelse(is.na(p), "", ifelse(p < 0.001, "< 0.001", formatC(p, format = "f", digits = 4)))
+}
+
+fmt_num <- function(x) {
+  vapply(as.numeric(x), function(v) {
+    if (is.na(v)) return("")
+    if (abs(v) >= 1e15) return(formatC(v, format = "e", digits = 4))
+    if (v == round(v)) return(formatC(v, format = "f", digits = 0, big.mark = ","))
+    if (abs(v) >= 1) return(formatC(v, format = "f", digits = 4, big.mark = ","))
+    formatC(v, format = "fg", digits = 4)
+  }, character(1))
+}
+
+kbl_estilo <- function(d) {
+  k <- knitr::kable(d, align = "c", row.names = FALSE) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  full_width = FALSE, position = "center") %>%
+    row_spec(0, bold = TRUE)
+  knitr::knit_print(k)
+}
+
+nombres <- c(".y." = "Variable", "group1" = "Grupo 1", "group2" = "Grupo 2",
+             "statistic" = "Estadístico", "p" = "p valor", "p.adj" = "p ajustado",
+             "p.adj.signif" = "Significancia", "effsize" = "Tamaño del efecto",
+             "magnitude" = "Magnitud", "method" = "Método")
+
+registerS3method("knit_print", "htest", function(x, ...) {
+  res <- data.frame(Prueba = x$method, Datos = x$data.name, check.names = FALSE)
+  if (!is.null(x$estimate)) res[[names(x$estimate)[1]]] <- fmt_num(x$estimate[1])
+  res[[names(x$statistic)[1]]] <- fmt_num(x$statistic[1])
+  if (!is.null(x$parameter)) res[["gl"]] <- fmt_num(x$parameter[1])
+  res[["p valor"]] <- fmt_p(x$p.value)
+  kbl_estilo(res)
+}, envir = asNamespace("knitr"))
+
+registerS3method("knit_print", "anova", function(x, ...) {
+  d <- as.data.frame(x)
+  if (identical(rownames(d)[1], "group")) {
+    res <- data.frame(Fuente = c("Grupo", "Residuos")[seq_len(nrow(d))],
+                      gl = fmt_num(d$Df),
+                      `Estadístico F` = fmt_num(d$`F value`),
+                      `p valor` = fmt_p(d$`Pr(>F)`),
+                      check.names = FALSE)
+  } else {
+    res <- cbind(` ` = rownames(d), d)
+    for (col in names(res)[-1]) {
+      res[[col]] <- if (grepl("^Pr", col)) fmt_p(res[[col]]) else fmt_num(res[[col]])
+    }
+  }
+  kbl_estilo(res)
+}, envir = asNamespace("knitr"))
+
+registerS3method("knit_print", "pairwise.htest", function(x, ...) {
+  m <- x$p.value
+  d <- as.data.frame(apply(m, 2, function(col) ifelse(is.na(col), "-", fmt_p(col))),
+                     check.names = FALSE)
+  d <- cbind(` ` = rownames(m), d)
+  kbl_estilo(d)
+}, envir = asNamespace("knitr"))
+
+tabla_matriz <- function(x) {
+  m <- unclass(as.matrix(x))
+  d <- as.data.frame(apply(m, 2, fmt_num), check.names = FALSE)
+  d <- cbind(` ` = rownames(m), d)
+  kbl_estilo(d)
+}
+registerS3method("knit_print", "table", function(x, ...) tabla_matriz(x),
+                 envir = asNamespace("knitr"))
+registerS3method("knit_print", "matrix", function(x, ...) tabla_matriz(x),
+                 envir = asNamespace("knitr"))
+
+registerS3method("knit_print", "data.frame", function(x, ...) {
+  d <- as.data.frame(x)
+  for (col in names(d)) {
+    if (col %in% c("p", "p.adj", "p.value")) d[[col]] <- fmt_p(d[[col]])
+    else if (is.numeric(d[[col]])) d[[col]] <- fmt_num(d[[col]])
+    else d[[col]] <- as.character(d[[col]])
+  }
+  cambiar <- names(d) %in% names(nombres)
+  names(d)[cambiar] <- nombres[names(d)[cambiar]]
+  kbl_estilo(d)
+}, envir = asNamespace("knitr"))
+```
+
+Pregunta 1: ¿Existe una diferencia significativa en el Performance Index entre estudiantes que realizan actividades extracurriculares y quienes no las realizan?
+
+Inicialmente se plantea la comparación en términos de medias poblacionales ($\mu_1$ para "No" y $\mu_2$ para "Yes"):
+
+$$
+\begin{aligned}
+H_0 &: \mu_1 = \mu_2 \quad \text{(no hay diferencia entre los grupos)} \\
+H_1 &: \mu_1 \neq \mu_2 \quad \text{(existe una diferencia entre los grupos)}
+\end{aligned}
+$$
+
+
+Se separan los valores de Performance Index según Extracurricular Activities y se evalúa la normalidad en cada grupo mediante la prueba de Lilliefors.
+
+```{r}
+sin_extra <- df %>% filter(Extracurricular_Activities == "No") %>% pull(Performance_Index)
+con_extra <- df %>% filter(Extracurricular_Activities == "Yes") %>% pull(Performance_Index)
+
+lil_no  <- lillie.test(sin_extra)
+lil_yes <- lillie.test(con_extra)
+lil_no
+lil_yes
+```
+
+
+Con una confianza del 95%, la prueba de Lilliefors muestra que las distribuciones de Performance Index para los estudiantes sin actividades extracurriculares ($D = `r fm(lil_no$statistic, 5)`$, p valor `r fp(lil_no$p.value)`) y con actividades extracurriculares ($D = `r fm(lil_yes$statistic, 5)`$, p valor `r fp(lil_yes$p.value)`) se desvían de la normalidad debido a su forma platicúrtica, por lo que no se emplea la prueba t paramétrica. Se replantea la hipótesis en términos de medianas ($\eta_1$ y $\eta_2$):
+
+$$\begin{aligned}
+H_0 &: \eta_1 = \eta_2 \\
+H_1 &: \eta_1 \neq \eta_2
+\end{aligned}$$
+
+Antes de aplicar Mann-Whitney-Wilcoxon, se verifica la homogeneidad de varianzas mediante la prueba de Levene centrada en la mediana:
+
+```{r}
+lev_ea <- leveneTest(Performance_Index ~ Extracurricular_Activities, data = df, center = "median")
+lev_ea
+```
+
+
+Con una confianza del 95%, la prueba de Levene indica que las varianzas de Performance Index son homogéneas entre ambos grupos ($F_{1} = `r fm(lev_ea[["F value"]][1], 4)`$, p valor `r fp(lev_ea[["Pr(>F)"]][1])`). Se aplica entonces la prueba de Mann-Whitney-Wilcoxon y se calcula su tamaño del efecto $r$:
+
+```{r}
+mw_ea <- df %>%
+  rstatix::wilcox_test(Performance_Index ~ Extracurricular_Activities, paired = FALSE)
+mw_ea
+```
+
+```{r}
+eff_ea <- df %>%
+  rstatix::wilcox_effsize(Performance_Index ~ Extracurricular_Activities, paired = FALSE)
+eff_ea
+```
+
+Con una confianza del 95%, la prueba de Mann-Whitney-Wilcoxon detecta una diferencia estadísticamente significativa en la distribución de Performance Index entre los estudiantes con y sin actividades extracurriculares ($U = `r fmil(mw_ea$statistic)`$, p valor `r fp(mw_ea$p)`), por lo que se rechaza $H_0$. Sin embargo, el tamaño del efecto ($r = `r fm(eff_ea$effsize, 4)`$) es muy pequeño, lo que confirma que de manera aislada esta variable tiene una relevancia práctica mínima sobre el índice de rendimiento.
+
+Pregunta 2: ¿Existe una correlación significativa entre Hours Studied y Performance Index?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Hours Studied y Performance Index.
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \quad \text{(no existe correlación entre las variables)} \\
+H_1 &: \rho \neq 0 \quad \text{(existe correlación entre las variables)}
+\end{aligned}$$
+
+Se verifica el supuesto de normalidad de ambas variables mediante la prueba de Lilliefors:
+
+```{r}
+lil_hs <- lillie.test(df$Hours_Studied)
+lil_pi <- lillie.test(df$Performance_Index)
+lil_hs
+lil_pi
+```
+
+Ni Hours Studied ($D = `r fm(lil_hs$statistic, 5)`$, p valor `r fp(lil_hs$p.value)`) ni Performance Index ($D = `r fm(lil_pi$statistic, 5)`$, p valor `r fp(lil_pi$p.value)`) siguen una distribución normal, por lo que se emplea la correlación de Spearman:
+
+```{r}
+cor.test(df$Hours_Studied, df$Performance_Index, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Hours_Studied, df$Performance_Index, "Hours Studied - Performance Index")
+```
+
+`r txt_cor("Hours Studied - Performance Index")` A diferencia de variables con efecto despreciable, aquí el coeficiente $\rho = `r fm(ICS[["Hours Studied - Performance Index"]]["rho"], 4)`$ refleja una asociación positiva moderada y prácticamente relevante: dedicar más horas al estudio se asocia de forma clara con un mayor índice de rendimiento académico.
+
+Pregunta 3: ¿Existe una correlación significativa entre Previous Scores y Performance Index?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Previous Scores y Performance Index.
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \quad \text{(no existe correlación entre las variables)} \\
+H_1 &: \rho \neq 0 \quad \text{(existe correlación entre las variables)}
+\end{aligned}$$
+
+Verificamos la normalidad de Previous Scores mediante Lilliefors (Performance Index ya se verificó en la Pregunta 2):
+
+```{r}
+lil_ps <- lillie.test(df$Previous_Scores)
+lil_ps
+```
+
+Dado que Previous Scores ($D = `r fm(lil_ps$statistic, 5)`$, p valor `r fp(lil_ps$p.value)`) tampoco es normal, se aplica la correlación de Spearman:
+
+```{r}
+cor.test(df$Previous_Scores, df$Performance_Index, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Previous_Scores, df$Performance_Index, "Previous Scores - Performance Index")
+```
+
+`r txt_cor("Previous Scores - Performance Index")` Con un coeficiente $\rho = `r fm(ICS[["Previous Scores - Performance Index"]]["rho"], 4)`$, existe una asociación positiva muy fuerte entre las calificaciones previas y el índice de rendimiento actual, consolidándose como el predictor individual más influyente del estudio.
+
+Pregunta 4: ¿Existe una correlación significativa entre Sleep Hours y Performance Index?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Sleep Hours y Performance Index.
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \quad \text{(no existe correlación entre las variables)} \\
+H_1 &: \rho \neq 0 \quad \text{(existe correlación entre las variables)}
+\end{aligned}$$
+
+Se verifica la normalidad de Sleep Hours mediante Lilliefors:
+
+```{r}
+lil_sh <- lillie.test(df$Sleep_Hours)
+lil_sh
+```
+
+Dado que Sleep Hours ($D = `r fm(lil_sh$statistic, 5)`$, p valor `r fp(lil_sh$p.value)`) no proviene de una distribución normal, se aplica la correlación de Spearman:
+
+```{r}
+cor.test(df$Sleep_Hours, df$Performance_Index, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Sleep_Hours, df$Performance_Index, "Sleep Hours - Performance Index")
+```
+
+`r txt_cor("Sleep Hours - Performance Index")`
+
+Pregunta 5: ¿Existe una correlación significativa entre Sample Question Papers Practiced y Performance Index?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Sample Question Papers Practiced y Performance Index.
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \quad \text{(no existe correlación entre las variables)} \\
+H_1 &: \rho \neq 0 \quad \text{(existe correlación entre las variables)}
+\end{aligned}$$
+
+Se verifica la normalidad de Sample Question Papers Practiced mediante Lilliefors:
+
+```{r}
+lil_sq <- lillie.test(df$Sample_Question_Papers_Practiced)
+lil_sq
+```
+
+Dado que Sample Question Papers Practiced ($D = `r fm(lil_sq$statistic, 5)`$, p valor `r fp(lil_sq$p.value)`) tampoco cumple normalidad, se calcula la correlación de Spearman:
+
+```{r}
+cor.test(df$Sample_Question_Papers_Practiced, df$Performance_Index, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Sample_Question_Papers_Practiced, df$Performance_Index,
+            "Sample Question Papers Practiced - Performance Index")
+```
+
+`r txt_cor("Sample Question Papers Practiced - Performance Index")`
+
+Pregunta 6: ¿Existe una correlación significativa entre Hours Studied y Previous Scores?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Hours Studied y Previous Scores. Ninguna de las dos variables es normal (Preguntas 2 y 3), por lo que se aplica Spearman:
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Hours_Studied, df$Previous_Scores, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Hours_Studied, df$Previous_Scores, "Hours Studied - Previous Scores")
+```
+`r txt_cor("Hours Studied - Previous Scores")`
+
+Pregunta 7: ¿Existe una correlación significativa entre Hours Studied y Sleep Hours?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Hours Studied y Sleep Hours (no normales según Preguntas 2 y 4):
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Hours_Studied, df$Sleep_Hours, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Hours_Studied, df$Sleep_Hours, "Hours Studied - Sleep Hours")
+```
+`r txt_cor("Hours Studied - Sleep Hours")`
+
+Pregunta 8: ¿Existe una correlación significativa entre Hours Studied y Sample Question Papers Practiced?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Hours Studied y Sample Question Papers Practiced (no normales según Preguntas 2 y 5):
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Hours_Studied, df$Sample_Question_Papers_Practiced, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Hours_Studied, df$Sample_Question_Papers_Practiced,
+            "Hours Studied - Sample Question Papers Practiced")
+```
+`r txt_cor("Hours Studied - Sample Question Papers Practiced")`
+
+Pregunta 9: ¿Existe una correlación significativa entre Previous Scores y Sleep Hours?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Previous Scores y Sleep Hours (no normales según Preguntas 3 y 4):
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Previous_Scores, df$Sleep_Hours, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Previous_Scores, df$Sleep_Hours, "Previous Scores - Sleep Hours")
+```
+`r txt_cor("Previous Scores - Sleep Hours")`
+
+Pregunta 10: ¿Existe una correlación significativa entre Previous Scores y Sample Question Papers Practiced?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Previous Scores y Sample Question Papers Practiced (no normales según Preguntas 3 y 5):
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Previous_Scores, df$Sample_Question_Papers_Practiced, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Previous_Scores, df$Sample_Question_Papers_Practiced,
+            "Previous Scores - Sample Question Papers Practiced")
+```
+`r txt_cor("Previous Scores - Sample Question Papers Practiced")`
+
+Pregunta 11: ¿Existe una correlación significativa entre Sleep Hours y Sample Question Papers Practiced?
+
+Sea $\rho$ el coeficiente de correlación poblacional entre Sleep Hours y Sample Question Papers Practiced (no normales según Preguntas 4 y 5):
+
+$$\begin{aligned}
+H_0 &: \rho = 0 \\
+H_1 &: \rho \neq 0
+\end{aligned}$$
+
+```{r}
+cor.test(df$Sleep_Hours, df$Sample_Question_Papers_Practiced, method = "spearman")
+```
+
+```{r}
+ic_spearman(df$Sleep_Hours, df$Sample_Question_Papers_Practiced,
+            "Sleep Hours - Sample Question Papers Practiced")
+```
+`r txt_cor("Sleep Hours - Sample Question Papers Practiced")`
+
+Conclusiones del capítulo
+
+```{r}
+concl_sp <- function(p, rho) {
+  ifelse(p >= 0.05, "No significativo",
+         ifelse(abs(rho) < 0.1, "Significativo, sin relevancia",
+                ifelse(abs(rho) < 0.3, "Significativo, débil",
+                       ifelse(abs(rho) < 0.7, "Significativo, moderada",
+                              "Significativo, fuerte"))))
+}
+
+# Fila 1: Prueba Mann-Whitney para Extracurricular Activities
+fila_ea <- data.frame(
+  Variable = "Extracurricular Activities",
+  Prueba = "Mann-Whitney",
+  p_valor = ifelse(mw_ea$p < 0.001, "< 0.001", sprintf("%.4f", mw_ea$p)),
+  Efecto = sprintf("$r = %.4f$", eff_ea$effsize),
+  IC = "-",
+  Conclusion = ifelse(mw_ea$p >= 0.05, "No significativo", "Significativo, sin relevancia"),
+  stringsAsFactors = FALSE
+)
+
+# Filas 2 a 11: Todas las pruebas de Spearman almacenadas en ICS
+filas_sp <- do.call(rbind, lapply(names(ICS), function(i) {
+  v <- ICS[[i]]
+  rho <- as.numeric(v["rho"])
+  p   <- as.numeric(v["p"])
+  etiqueta_var <- sub(" - Performance Index$", "", i)
+  data.frame(
+    Variable = etiqueta_var,
+    Prueba = "Spearman",
+    p_valor = ifelse(p < 0.001, "< 0.001", sprintf("%.4f", p)),
+    Efecto = sprintf("$\\rho = %.4f$", rho),
+    IC = sprintf("$(%.4f, %.4f)$", as.numeric(v["inferior"]), as.numeric(v["superior"])),
+    Conclusion = concl_sp(p, rho),
+    stringsAsFactors = FALSE
+  )
+}))
+
+resumen <- rbind(fila_ea, filas_sp)
+rownames(resumen) <- NULL
+
+# Cantidades para el texto
+es_resp <- grepl(" - Performance Index$", names(ICS))
+ic_resp <- ICS[es_resp]
+ic_pred <- ICS[!es_resp]
+
+fuera_cero_resp <- sum(sapply(ic_resp, function(v) v["inferior"] > 0 | v["superior"] < 0))
+sig_pred <- sum(sapply(ic_pred, function(v) v["p"] < 0.05))
+max_rho_pred <- max(abs(sapply(ic_pred, function(v) v["rho"])))
+```
+
+Retomando la pregunta guía de este capítulo —¿cuáles de las 5 variables predictoras presentan una asociación estadísticamente significativa y prácticamente relevante con Performance Index?—, la Tabla @ref(tab:resumen) resume las `r nrow(resumen)` pruebas de hipótesis realizadas.
+
+```{r}
+resumen %>%
+  kable(col.names = c("Variable / Relación", "Prueba", "p valor", "Efecto", "IC 95%", "Conclusión"),
+        caption = paste0("Resumen de las ", nrow(resumen), " pruebas de hipótesis realizadas"),
+        align = "lccccl", escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(6, bold = TRUE,
+              color = ifelse(resumen$Conclusion == "No significativo", "#555555",
+                             ifelse(resumen$Conclusion == "Significativo, sin relevancia",
+                                    "#8B5A00", "#1B5E20")))
+```
+
+Los resultados muestran un panorama bien diferenciado:
+
+Predictores con relevancia práctica individual: Previous Scores presenta una asociación positiva muy fuerte con Performance Index ($\rho = `r fm(ICS[["Previous Scores - Performance Index"]]["rho"], 4)`$, p valor $< 0.001$), y Hours Studied muestra una asociación positiva moderada ($\rho = `r fm(ICS[["Hours Studied - Performance Index"]]["rho"], 4)`$, p valor $< 0.001$). Ambas cumplen tanto significancia estadística como relevancia práctica.
+
+redictores estadísticamente significativos pero débiles de forma aislada: Sleep Hours ($\rho = `r fm(ICS[["Sleep Hours - Performance Index"]]["rho"], 4)`$), Sample Question Papers Practiced ($\rho = `r fm(ICS[["Sample Question Papers Practiced - Performance Index"]]["rho"], 4)`$) y Extracurricular Activities ($r = `r fm(eff_ea$effsize, 4)`$) resultan estadísticamente significativos con $\alpha = 0.05$, pero su efecto marginal individual es pequeño cuando no se controla por la gran variabilidad introducida por Previous Scores y Hours Studied.
+
+Independencia entre predictores: De los `r length(ic_pred)` pares de predictores numéricos evaluados, `r sig_pred` resultaron estadísticamente significativos y el mayor coeficiente absoluto fue apenas $|\rho| = `r formatC(max_rho_pred, format = "f", digits = 4)`$, confirmando que los regresores no presentan redundancia ni multicolinealidad entre sí.
+
+En el Capítulo @ref(rlm) se ajusta un modelo de regresión lineal múltiple que incorpora las 5 variables de forma simultánea, lo que permitirá aislar el efecto neto de cada factor manteniendo constantes los demás y evaluar su capacidad predictiva conjunta.
+
+# Modelo de regresión lineal múltiple {#rlm}
+
+En el capítulo anterior se evaluó cada predictor de forma individual, observando que Previous Scores y Hours Studied ejercen una influencia marcada sobre Performance Index, mientras que el efecto neto de Sleep Hours, Sample Question Papers Practiced y Extracurricular Activities queda parcialmente enmascarado por la variabilidad de los dos primeros. En este capítulo se ajusta un modelo de regresión lineal múltiple (RLM) que incorpora simultáneamente las 5 variables predictoras.
+
+El modelo de RLM con $k$ regresores se expresa como:
+
+$$y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \cdots + \beta_k x_{ik} + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2), \qquad i = 1, \dots, n$$
+donde $\beta_0$ es el intercepto, $\beta_j$ mide la influencia neta de la variable $x_j$ sobre Performance Index manteniendo constantes las demás, y $\varepsilon_i$ es el error aleatorio. Los coeficientes se estiman por mínimos cuadrados ordinarios:
+
+$$\hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{y}$$
+
+```{r}
+library(lmtest)
+```
+
+```{r}
+fm <- function(x, d = 4) formatC(as.numeric(x), format = "f", digits = d)
+fp <- function(p) {
+  p <- as.numeric(p)
+  if (is.na(p)) return("-")
+  if (p < 0.001) "$< 0.001$" else paste0("$= ", formatC(p, format = "f", digits = 4), "$")
+}
+fmil <- function(x, d = 0) formatC(as.numeric(x), format = "f", digits = d, big.mark = ",")
+fmt_p <- function(p) {
+  p <- as.numeric(p)
+  ifelse(is.na(p), "", ifelse(p < 0.001, "< 0.001", formatC(p, format = "f", digits = 4)))
+}
+fmt_num <- function(x) {
+  vapply(as.numeric(x), function(v) {
+    if (is.na(v)) return("")
+    if (abs(v) >= 1e15) return(formatC(v, format = "e", digits = 4))
+    if (v == round(v)) return(formatC(v, format = "f", digits = 0, big.mark = ","))
+    if (abs(v) >= 1) return(formatC(v, format = "f", digits = 4, big.mark = ","))
+    formatC(v, format = "fg", digits = 4)
+  }, character(1))
+}
+
+tabla_rlm <- function(d, caption = NULL, p_cols = character(0), align = "c") {
+  d <- as.data.frame(d, check.names = FALSE)
+  for (col in names(d)) {
+    if (col %in% p_cols) d[[col]] <- fmt_p(d[[col]])
+    else if (is.numeric(d[[col]])) d[[col]] <- fmt_num(d[[col]])
+  }
+  knitr::kable(d, caption = caption, align = align, row.names = FALSE, escape = FALSE) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  full_width = FALSE, position = "center") %>%
+    row_spec(0, bold = TRUE)
+}
+
+coef_robustos <- function(modelo, covarianza = sandwich::vcovHC(modelo, type = "HC1")) {
+  prueba <- lmtest::coeftest(modelo, vcov. = covarianza)
+  broom::tidy(prueba, conf.int = TRUE)
+}
+
+tabla_coef <- function(m, caption, covarianza = sandwich::vcovHC(m, type = "HC1")) {
+  coef_robustos(m, covarianza) %>%
+    transmute(`Término` = term, `Estimación` = estimate, `Error estándar HC1` = std.error,
+              `$t$` = statistic, `p valor` = p.value,
+              `IC 2.5%` = conf.low, `IC 97.5%` = conf.high) %>%
+    tabla_rlm(caption, p_cols = "p valor")
+}
+
+vars_de <- function(m) attr(terms(m), "term.labels")
+
+info_termino <- function(term, datos) {
+  if (term %in% names(datos)) return(list(var = term, nivel = NA))
+  fac <- names(datos)[sapply(datos, is.factor)]
+  v <- fac[startsWith(term, fac)]
+  v <- v[which.max(nchar(v))]
+  list(var = v, nivel = substring(term, nchar(v) + 1))
+}
+etiqueta <- function(term, datos) {
+  i <- info_termino(term, datos)
+  if (is.na(i$nivel)) gsub("_", " ", i$var) else paste0(gsub("_", " ", i$var), " = ", i$nivel)
+}
+
+ecuacion_latex <- function(m, datos, por_linea = 2) {
+  b <- coef(m)
+  terminos <- vapply(names(b)[-1], function(t) {
+    paste0(ifelse(b[t] >= 0, "+ ", "- "), formatC(abs(b[t]), format = "fg", digits = 4),
+           "\\,\\text{", etiqueta(t, datos), "}")
+  }, character(1))
+  grupos <- split(terminos, ceiling(seq_along(terminos) / por_linea))
+  lineas <- vapply(grupos, paste, character(1), collapse = " ")
+  paste0("\\begin{aligned}\n\\widehat{\\text{Performance Index}} &= ",
+         formatC(b[1], format = "f", digits = 2), " ",
+         paste(lineas, collapse = " \\\\\n&\\quad "), "\n\\end{aligned}")
+}
+
+interpretar <- function(m, datos) {
+  b <- coef(m)[-1]
+  vapply(names(b), function(t) {
+    i <- info_termino(t, datos)
+    mag <- formatC(abs(b[t]), format = "fg", digits = 4)
+    if (is.na(i$nivel)) {
+      paste0("Por cada unidad adicional de ", gsub("_", " ", i$var), ", el índice de rendimiento promedio ",
+             ifelse(b[t] >= 0, "aumenta", "disminuye"), " en ", mag,
+             " puntos, manteniendo constantes las demás variables.")
+    } else {
+      paste0("Los estudiantes con ", gsub("_", " ", i$var), " = ", i$nivel, " obtienen en promedio ",
+             mag, " puntos ", ifelse(b[t] >= 0, "más", "menos"), " que los de la categoría base (",
+             levels(datos[[i$var]])[1], "), manteniendo constantes las demás variables.")
+    }
+  }, character(1))
+}
+
+# Preparación de partición sin fuga de información
+preparar_particion <- function(ajuste, evaluacion) {
+  ajuste <- as.data.frame(ajuste)
+  evaluacion <- as.data.frame(evaluacion)
+  num_cols <- setdiff(names(ajuste)[sapply(ajuste, is.numeric)], "Performance_Index")
+  cat_cols <- names(ajuste)[sapply(ajuste, function(x) is.character(x) || is.factor(x))]
+
+  for (col in num_cols) {
+    med <- median(ajuste[[col]], na.rm = TRUE)
+    ajuste[[col]][is.na(ajuste[[col]])] <- med
+    evaluacion[[col]][is.na(evaluacion[[col]])] <- med
+  }
+
+  for (col in cat_cols) {
+    vals <- as.character(ajuste[[col]])
+    vals_eval <- as.character(evaluacion[[col]])
+    moda_val <- names(which.max(table(vals)))
+    vals[is.na(vals)] <- moda_val
+    vals_eval[is.na(vals_eval)] <- moda_val
+    niveles <- sort(unique(vals))
+    ajuste[[col]] <- factor(vals, levels = niveles)
+    evaluacion[[col]] <- factor(vals_eval, levels = niveles)
+  }
+
+  list(ajuste = ajuste, evaluacion = evaluacion)
+}
+
+# Validación cruzada de 5 pliegues
+validar_modelos <- function(datos_entrenamiento, pliegues) {
+  k_folds <- sort(unique(pliegues))
+  modelos_nombres <- c("Nulo", "Completo", "Forward (BIC)", "Backward (BIC)",
+                       "Stepwise (BIC)", "Stepwise (AIC)")
+  resultados <- list()
+
+  for (f in k_folds) {
+    part <- preparar_particion(datos_entrenamiento[pliegues != f, ],
+                               datos_entrenamiento[pliegues == f, ])
+    tr <- part$ajuste
+    va <- part$evaluacion
+    y_va <- va$Performance_Index
+    media_tr <- mean(tr$Performance_Index)
+
+    m_nulo <- lm(Performance_Index ~ 1, data = tr)
+    m_full <- lm(Performance_Index ~ ., data = tr)
+    alcance <- list(lower = m_nulo, upper = m_full)
+    k_bic <- log(nrow(tr))
+
+    m_fwd <- MASS::stepAIC(m_nulo, scope = alcance, direction = "forward", k = k_bic, trace = FALSE)
+    m_bwd <- MASS::stepAIC(m_full, direction = "backward", k = k_bic, trace = FALSE)
+    m_bic <- MASS::stepAIC(m_nulo, scope = alcance, direction = "both", k = k_bic, trace = FALSE)
+    m_aic <- MASS::stepAIC(m_nulo, scope = alcance, direction = "both", k = 2, trace = FALSE)
+
+    preds <- list(
+      "Nulo"           = rep(media_tr, nrow(va)),
+      "Completo"       = predict(m_full, va),
+      "Forward (BIC)"  = predict(m_fwd, va),
+      "Backward (BIC)" = predict(m_bwd, va),
+      "Stepwise (BIC)" = predict(m_bic, va),
+      "Stepwise (AIC)" = predict(m_aic, va)
+    )
+
+    resultados[[f]] <- tibble(
+      Modelo = modelos_nombres,
+      RMSE = sapply(preds, function(pr) sqrt(mean((y_va - pr)^2))),
+      MAE  = sapply(preds, function(pr) mean(abs(y_va - pr))),
+      R2   = sapply(preds, function(pr) 1 - sum((y_va - pr)^2) / sum((y_va - media_tr)^2))
+    )
+  }
+
+  bind_rows(resultados) %>%
+    group_by(Modelo) %>%
+    summarise(
+      RMSE = mean(RMSE),
+      MAE  = mean(MAE),
+      `$R^2$ validación` = mean(R2),
+      .groups = "drop"
+    ) %>%
+    arrange(RMSE)
+}
+```
+
+Preparación de los datos
+
+El análisis predictivo parte directamente del archivo Student_Performance.csv. Se incluyen todas las variables disponibles, se codifica Extracurricular Activities como factor con categoría base "No", y se realiza una partición externa aleatoria 80/20 (8,000 observaciones para entrenamiento y 2,000 para prueba).
+
+```{r}
+datos_modelo <- as.data.frame(data.table::fread("data/Student_Performance.csv", na.strings = c("", "NA")))
+names(datos_modelo) <- gsub(" ", "_", names(datos_modelo), fixed = TRUE)
+set.seed(123)
+idx_train <- sample(nrow(datos_modelo), size = round(0.8 * nrow(datos_modelo)))
+datos_entrenamiento <- datos_modelo[idx_train, ]
+particion <- preparar_particion(datos_entrenamiento, datos_modelo[-idx_train, ])
+train <- particion$ajuste
+test <- particion$evaluacion
+rm(datos_modelo, particion)
+fac_vars <- names(train)[sapply(train, is.factor)]
+num_vars <- setdiff(names(train)[sapply(train, is.numeric)], "Performance_Index")
+n_dummies <- sum(sapply(fac_vars, function(v) nlevels(train[[v]]) - 1))
+```
+
+Cada variable categórica con $c$ categorías se representa mediante $c - 1$ variables dummy. En este caso, Extracurricular Activities tiene 2 niveles ("No" y "Yes"), por lo que se genera 1 variable dummy tomando "No" como categoría de referencia.
+
+```{r}
+tibble(Variable = gsub("_", " ", fac_vars),
+       `Categoría base` = sapply(fac_vars, function(v) levels(train[[v]])[1]),
+       `Variables dummy` = sapply(fac_vars, function(v) nlevels(train[[v]]) - 1)) %>%
+  tabla_rlm("Codificación de las variables categóricas en variables dummy")
+```
+
+La variable categórica aporta `r n_dummies` variable dummy que, junto con las `r length(num_vars)` variables numéricas y el intercepto, conforman un total de $p = `r n_dummies + length(num_vars) + 1`$ parámetros en el modelo completo.
+
+El conjunto de entrenamiento contiene `r fmil(nrow(train))` registros y el conjunto de prueba contiene `r fmil(nrow(test))`. Se comparan seis procedimientos mediante validación cruzada de cinco pliegues dentro del entrenamiento.
+
+```{r}
+set.seed(124)
+pliegues <- sample(rep(seq_len(5), length.out = nrow(datos_entrenamiento)))
+cv <- validar_modelos(datos_entrenamiento, pliegues)
+rm(datos_entrenamiento, pliegues)
+invisible(gc())
+```
+
+Regresión lineal simple como punto de partida
+
+Antes de ajustar el modelo múltiple, se ajusta un modelo de regresión lineal simple (RLS) utilizando Previous Scores, que en el capítulo anterior fue el predictor con mayor correlación con Performance Index ($\rho_s = `r fm(ICS[["Previous Scores - Performance Index"]]["rho"])`$). El modelo se expresa como:
+
+$$y_i = \beta_0 + \beta_1 x_i + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2)$$
+donde $y_i$ es Performance Index y $x_i$ es Previous Scores. Se plantea la prueba:
+
+$$\begin{aligned}
+H_0 &: \beta_1 = 0 \quad \text{(Previous Scores no tiene efecto lineal sobre el rendimiento)} \\
+H_1 &: \beta_1 \neq 0 \quad \text{(Previous Scores tiene efecto lineal sobre el rendimiento)}
+\end{aligned}$$
+
+```{r}
+modelo_rls <- lm(Performance_Index ~ Previous_Scores, data = train)
+tabla_coef(modelo_rls, "Coeficientes estimados del modelo de regresión lineal simple e intervalos de confianza del 95%")
+
+s_rls  <- summary(modelo_rls)
+b_rls  <- coef(modelo_rls)
+t_b1   <- coef(s_rls)[2, "t value"]
+p_b1   <- coef(s_rls)[2, "Pr(>|t|)"]
+r2_rls <- s_rls$r.squared
+```
+
+```{r}
+ggplot(train, aes(x = Previous_Scores, y = Performance_Index)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.0) +
+  geom_abline(intercept = b_rls[1], slope = b_rls[2], color = "#B22222", linewidth = 1) +
+  labs(title = "Recta de regresión de Performance Index sobre Previous Scores (entrenamiento)",
+       x = "Previous Scores", y = "Performance Index")
+```
+
+El modelo estimado es:
+
+$$\widehat{\text{Performance Index}} = `r fm(b_rls[1], 2)` `r ifelse(b_rls[2] >= 0, "+", "-")` `r formatC(abs(b_rls[2]), format = "fg", digits = 4)`\,\text{Previous Scores}$$
+Con una confianza del 95%, la prueba t indica que Previous Scores tiene un efecto lineal altamente significativo sobre el rendimiento académico ($t = `r fm(t_b1, 2)`$, p valor `r fp(p_b1)`), por lo que se rechaza $H_0$. Por cada punto adicional en la calificación previa, el índice de rendimiento promedio aumenta en `r fm(abs(b_rls[2]), 4)` puntos. El coeficiente de determinación alcanza $R^2 = `r fm(r2_rls)`$, explicando por sí solo el `r fm(100 * r2_rls, 2)`% de la variabilidad de Performance Index.
+
+```{r}
+rmse_nulo <- sqrt(mean((test$Performance_Index - mean(train$Performance_Index))^2))
+rmse_rls  <- sqrt(mean((test$Performance_Index - predict(modelo_rls, test))^2))
+```
+
+En el conjunto de prueba, este modelo simple logra un $RMSE = `r fm(rmse_rls, 2)`$, frente a `r fm(rmse_nulo, 2)` del modelo nulo basado en el promedio, reduciendo el error en un `r fm(100 * (1 - rmse_rls / rmse_nulo), 2)`%. No obstante, en el gráfico se observa una dispersión vertical apreciable alrededor de la recta (de unos $\pm 15$ puntos), correspondiente al efecto de las horas de estudio y los demás factores que aún no se han incorporado.
+
+Modelo completo
+
+Se ajusta a continuación el modelo de regresión lineal múltiple completo con las 5 variables predictoras:
+
+```{r}
+modelo_full <- lm(Performance_Index ~ ., data = train)
+```
+
+Prueba de significancia global
+
+La prueba de significancia global evalúa si existe relación lineal entre Performance Index y al menos una de las variables regresoras:
+
+$$\begin{aligned}
+H_0 &: \beta_1 = \beta_2 = \cdots = \beta_k = 0 \\
+H_1 &: \beta_j \neq 0 \quad \text{para al menos una } j
+\end{aligned}$$
+
+
+```{r}
+y_tr <- train$Performance_Index
+n  <- nrow(train)
+p  <- length(coef(modelo_full))
+k  <- p - 1
+
+SST <- sum((y_tr - mean(y_tr))^2)
+SSE <- sum(residuals(modelo_full)^2)
+SSR <- SST - SSE
+MSR <- SSR / k
+MSE <- SSE / (n - p)
+F0  <- MSR / MSE
+p_F <- pf(F0, k, n - p, lower.tail = FALSE)
+
+tibble(`Fuente de variación` = c("Regresión", "Residuales", "Total"),
+       `Suma de cuadrados` = c(SSR, SSE, SST),
+       gl = c(k, n - p, n - 1),
+       `Cuadrado medio` = c(MSR, MSE, NA),
+       `$F_0$` = c(F0, NA, NA),
+       `p valor` = c(p_F, NA, NA)) %>%
+  tabla_rlm("Tabla ANOVA del modelo completo", p_cols = "p valor")
+
+r2_full   <- SSR / SST
+r2aj_full <- 1 - (SSE / (n - p)) / (SST / (n - 1))
+```
+
+Con una confianza del 95%, la prueba F global confirma que el modelo en su conjunto es altamente significativo ($F_{`r k`,\, `r fmil(n - p)`} = `r fm(F0, 2)`$, p valor `r fp(p_F)`), rechazando $H_0$. El coeficiente de determinación sube de `r fm(r2_rls)` en el modelo simple a $R^2 = `r fm(r2_full)`$ ($R^2_{aj} = `r fm(r2aj_full)`$), logrando explicar el `r fm(100 * r2_full, 2)`% de la variabilidad total de Performance Index.
+
+Pruebas individuales e intervalos de confianza
+
+Para cada coeficiente se contrasta:
+
+$$\begin{aligned}
+H_0 &: \beta_j = 0 \\
+H_1 &: \beta_j \neq 0
+\end{aligned}$$
+
+Los intervalos del 95 % y los valores p utilizan errores estándar robustos HC1.
+
+```{r}
+cov_full <- sandwich::vcovHC(modelo_full, type = "HC1")
+tabla_coef(modelo_full, "Coeficientes del modelo completo e IC robustos del 95%", cov_full)
+
+coef_full <- coef_robustos(modelo_full, cov_full)[-1, ]
+sig_full  <- coef_full$term[coef_full$p.value < 0.05]
+```
+
+Con una confianza del 95%, los `r k` coeficientes asociados a las variables predictoras (`r paste(sapply(sig_full, etiqueta, datos = train), collapse = ", ")`) resultan altamente significativos (p valor $< 0.001$ en todos los casos) y ninguno de sus intervalos de confianza contiene al 0. Esto confirma que, al controlar por Previous Scores y Hours Studied, tanto Sleep Hours, Sample Question Papers Practiced como Extracurricular Activities aportan información real y significativa.
+
+Análisis de multicolinealidad
+
+Se verifica la ausencia de multicolinealidad mediante el factor de inflación de varianza (VIF, criterio $VIF < 5$) y el índice de número de condición (ICN, criterio $ICN < 30$) calculado sobre las columnas estandarizadas de la matriz de diseño.
+
+```{r}
+vif_full <- car::vif(modelo_full)
+if (is.matrix(vif_full)) {
+  tabla_vif <- as.data.frame(vif_full) %>%
+    tibble::rownames_to_column("Variable") %>%
+    mutate(Variable = gsub("_", " ", Variable))
+  names(tabla_vif) <- c("Variable", "GVIF", "gl", "$GVIF^{1/(2\\,gl)}$")
+  gvif_max <- max(vif_full[, 3])
+  umbral_vif <- sqrt(5)
+} else {
+  tabla_vif <- tibble(
+    Variable = gsub("_", " ", names(vif_full)),
+    VIF = as.numeric(vif_full)
+  )
+  gvif_max <- max(vif_full)
+  umbral_vif <- 5
+}
+tabla_vif %>% tabla_rlm("Factor de inflación de varianza (VIF) del modelo completo")
+```
+
+```{r}
+X_std <- scale(model.matrix(modelo_full)[, -1])
+icn <- kappa(X_std, exact = TRUE)
+rm(X_std); invisible(gc())
+```
+
+Selección de variables
+
+Con 5 variables predictoras existen $2^5 - 1 = 31$ subconjuntos posibles. Se aplica selección secuencial con los métodos forward, backward y stepwise bajo el criterio BIC ($k = \ln n$) y stepwise bajo AIC ($k = 2$).
+
+```{r}
+modelo_nulo <- lm(Performance_Index ~ 1, data = train)
+k_bic <- log(nrow(train))
+alcance <- list(lower = modelo_nulo, upper = modelo_full)
+
+sel_forward <- MASS::stepAIC(modelo_nulo, scope = alcance, direction = "forward",
+                             k = k_bic, trace = FALSE)
+
+sel_backward <- MASS::stepAIC(modelo_full, direction = "backward",
+                              k = k_bic, trace = FALSE)
+
+sel_both <- MASS::stepAIC(modelo_nulo, scope = alcance, direction = "both",
+                          k = k_bic, trace = FALSE)
+
+sel_aic <- MASS::stepAIC(modelo_nulo, scope = alcance, direction = "both",
+                         k = 2, trace = FALSE)
+```
+
+```{r}
+sel <- list("Forward (BIC)" = sel_forward, "Backward (BIC)" = sel_backward,
+            "Stepwise (BIC)" = sel_both, "Stepwise (AIC)" = sel_aic)
+
+tibble(`Método` = names(sel),
+       `Número de variables` = sapply(sel, function(m) length(vars_de(m))),
+       Variables = sapply(sel, function(m) paste(gsub("_", " ", sort(vars_de(m))), collapse = ", ")),
+       AIC = sapply(sel, AIC),
+       BIC = sapply(sel, BIC)) %>%
+  tabla_rlm("Modelos obtenidos con la selección secuencial", align = "lclcc")
+
+mismas_bic <- identical(sort(vars_de(sel_forward)), sort(vars_de(sel_backward))) &&
+  identical(sort(vars_de(sel_forward)), sort(vars_de(sel_both)))
+
+modelo_bic <- sel_both
+vars_bic   <- vars_de(modelo_bic)
+vars_elim  <- setdiff(vars_de(modelo_full), vars_bic)
+vars_aic   <- vars_de(sel_aic)
+
+rm(sel_forward, sel_backward, sel); invisible(gc())
+```
+
+Los cuatro procedimientos (Forward BIC, Backward BIC, Stepwise BIC y Stepwise AIC) coinciden exactamente en retener las `r length(vars_bic)` variables predictoras: `r paste(gsub("_", " ", vars_bic), collapse = ", ")`. Ninguna variable es descartada (`r length(vars_elim)` variables eliminadas), lo cual confirma que cada uno de los cinco predictores aporta una contribución estadísticamente indispensable al modelo.
+
+```{r}
+if (length(vars_elim) > 0) {
+  f_parcial <- anova(modelo_bic, modelo_full)
+  f_parcial
+  p_parcial <- f_parcial$`Pr(>F)`[2]
+} else {
+  p_parcial <- NA_real_
+}
+```
+
+Dado que el modelo seleccionado por BIC conserva la totalidad de los 5 predictores, coincide con el modelo completo ($R^2 = `r fm(summary(modelo_bic)$r.squared)`$, $R^2_{aj} = `r fm(summary(modelo_bic)$adj.r.squared)`$).
+
+```{r}
+tabla_coef(modelo_bic, "Coeficientes estimados del modelo seleccionado por BIC e intervalos de confianza del 95%")
+r2_bic   <- summary(modelo_bic)$r.squared
+r2aj_bic <- summary(modelo_bic)$adj.r.squared
+```
+
+Análisis de residuales
+
+Se validan los supuestos clásicos del modelo seleccionado: independencia, normalidad, media cero y varianza constante de los errores, así como la presencia de observaciones atípicas o influyentes sobre los `r fmil(nrow(train))` residuales de entrenamiento.
+
+```{r}
+res_bic <- residuals(modelo_bic)
+aj_bic  <- fitted(modelo_bic)
+```
+
+Independencia de los errores
+
+$$\begin{aligned}
+H_0 &: \text{los errores son independientes (no hay autocorrelación)} \\
+H_1 &: \text{los errores están autocorrelacionados}
+\end{aligned}$$
+
+```{r}
+dw <- lmtest::dwtest(modelo_bic, alternative = "two.sided")
+dw
+```
+
+Con una confianza del 95%, la prueba de Durbin-Watson `r ifelse(dw$p.value < 0.05, "indica autocorrelación en los errores", "indica que no hay evidencia de autocorrelación en los errores")` ($DW = `r fm(dw$statistic)`$, p valor `r fp(dw$p.value)`), por lo que `r ifelse(dw$p.value < 0.05, "no se cumple", "se cumple")` el supuesto de independencia.
+
+Normalidad de los errores
+
+$$\begin{aligned}
+H_0 &: \text{los errores siguen una distribución normal} \\
+H_1 &: \text{los errores no siguen una distribución normal}
+\end{aligned}$$
+
+```{r}
+lil_res <- lillie.test(res_bic)
+lil_res
+```
+
+```{r}
+car::qqPlot(res_bic, las = 1, id = FALSE,
+            xlab = "Cuantiles teóricos", ylab = "Residuales",
+            main = "Gráfico Q-Q de los residuales del modelo")
+```
+
+Con una confianza del 95%, la prueba de Lilliefors indica que los residuales `r ifelse(lil_res$p.value < 0.05, "no siguen", "siguen")` una distribución normal ($D = `r fm(lil_res$statistic, 5)`$, p valor `r fp(lil_res$p.value)`). En el gráfico Q-Q se observa que todos los puntos se alinean estrechamente sobre la diagonal teórica a lo largo de todo el rango, cumpliendo plenamente el supuesto de normalidad.
+
+Media cero de los errores
+
+$$\begin{aligned}
+H_0 &: E(\varepsilon) = 0 \\
+H_1 &: E(\varepsilon) \neq 0
+\end{aligned}$$
+
+```{r}
+t_res <- t.test(res_bic, mu = 0)
+t_res
+```
+
+Con una confianza del 95%, no hay evidencia para afirmar que la media de los residuales sea distinta de cero (p valor `r fp(t_res$p.value)`), cumpliéndose el supuesto de media cero.
+
+Varianza constante de los errores
+
+$$\begin{aligned}
+H_0 &: \text{la varianza de los errores es constante (homocedasticidad)} \\
+H_1 &: \text{la varianza de los errores no es constante (heterocedasticidad)}
+\end{aligned}$$
+
+```{r}
+bp_bic <- lmtest::bptest(modelo_bic)
+bp_bic
+```
+
+```{r res-vs-ajustados }
+tibble(ajustado = aj_bic, residuo = res_bic) %>%
+  ggplot(aes(x = ajustado, y = residuo)) +
+  geom_point(color = "#5B7C99", alpha = 0.25, size = 1.0) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_smooth(se = FALSE, color = "#B22222") +
+  labs(title = "Residuales vs valores ajustados",
+       x = "Valores ajustados", y = "Residuales")
+```
+
+Con una confianza del 95%, la prueba de Breusch-Pagan `r ifelse(bp_bic$p.value < 0.05, "indica heterocedasticidad", "indica que la varianza de los errores es constante")` ($BP = `r fm(bp_bic$statistic, 2)`$, gl $= `r bp_bic$parameter`$, p valor `r fp(bp_bic$p.value)`), por lo que `r ifelse(bp_bic$p.value < 0.05, "no se cumple", "se cumple")` el supuesto de homocedasticidad. En el gráfico se observa una nube horizontal uniforme centrada en cero con dispersión constante entre $-6$ y $+6$ puntos a lo largo de todo el espectro de valores ajustados.
+
+Identificación de outliers
+
+Una observación se considera atípica si su residual estudentizado $r_i$ cae fuera de $(-3, 3)$. Adicionalmente se aplica la prueba de Bonferroni sobre los mayores residuales estudentizados.
+
+```{r}
+r_est <- rstudent(modelo_bic)
+n_out <- sum(abs(r_est) > 3)
+esperados <- 2 * pnorm(-3) * length(r_est)
+
+ot <- car::outlierTest(modelo_bic, n.max = 5)
+tibble(`Observación` = names(ot$rstudent),
+       `Residual estudentizado` = ot$rstudent,
+       `p valor` = ot$p,
+       `p Bonferroni` = ot$bonf.p) %>%
+  tabla_rlm("Prueba de Bonferroni para outliers", p_cols = c("p valor", "p Bonferroni"))
+rm(r_est); invisible(gc())
+```
+
+Se encontraron `r fmil(n_out)` observaciones con $|r_i| > 3$ (el `r fm(100 * n_out / length(res_bic), 2)`% del total), cifra totalmente coherente con lo esperado por azar bajo normalidad (`r fmil(esperados)` observaciones, el 0.27%). `r ifelse(any(ot$bonf.p < 0.05), "La prueba de Bonferroni identifica observaciones atípicas puntuales", "La prueba de Bonferroni confirma que ninguna observación constituye un outlier significativo")`
+
+
+Identificación de observaciones influyentes 
+
+La influencia de cada observación se evalúa mediante la distancia de Cook, $D_i = \dfrac{r_i^2}{p}\dfrac{h_{ii}}{1 - h_{ii}}$, comparada con el umbral de referencia $\dfrac{4}{n - p - 2}$.
+
+```{r}
+cook <- cooks.distance(modelo_bic)
+p_bic <- length(coef(modelo_bic))
+umbral <- 4 / (length(cook) - p_bic - 2)
+n_infl <- sum(cook > umbral)
+
+plot(cook, type = "h", las = 1, xlab = "Índice", ylab = "Distancia de Cook",
+     main = "Distancia de Cook (línea = umbral)")
+abline(h = umbral, lty = 2, col = "#B22222")
+```
+
+```{r}
+ord <- order(cook, decreasing = TRUE)
+tibble(`Observación` = names(cook)[ord], `Distancia de Cook` = cook[ord]) %>%
+  tabla_rlm("Observaciones con mayor distancia de Cook")
+cook_max <- max(cook)
+rm(cook); invisible(gc())
+```
+
+Aunque `r fmil(n_infl)` observaciones superan el umbral convencional $4/(n-p-2) = `r formatC(umbral, format = "e", digits = 2)`$, la máxima distancia de Cook registrada es apenas $`r formatC(cook_max, format = "e", digits = 2)` \ll 1$, por lo que ninguna observación individual ejerce influencia desproporcionada sobre los coeficientes estimados.
+
+Transformación de Box-Cox
+
+Aunque los residuales del modelo lineal original ya satisfacen los supuestos de normalidad y homocedasticidad, se examina como diagnóstico complementario la transformación de Box-Cox de la variable respuesta:
+
+$$y^{(\lambda)} =
+\begin{cases}
+\dfrac{y^\lambda - 1}{\lambda}, & \lambda \neq 0 \\
+\ln y, & \lambda = 0
+\end{cases}$$
+
+```{r}
+stopifnot(min(train$Performance_Index) > 0)
+bc <- MASS::boxcox(formula(modelo_bic), data = train,
+                   lambda = seq(0.5, 1.2, 0.02))
+lambda_hat <- bc$x[which.max(bc$y)]
+ic_lambda  <- range(bc$x[bc$y > max(bc$y) - qchisq(0.95, 1) / 2])
+lambda     <- round(lambda_hat, 2)
+```
+
+El valor óptimo estimado es $\hat\lambda = `r fm(lambda_hat, 2)`$, con un intervalo de confianza del 95% de $(`r fm(ic_lambda[1], 2)`, `r fm(ic_lambda[2], 2)`)$. Evaluamos el ajuste con $\lambda = `r lambda`$ para verificar su efecto sobre los residuales:
+
+```{r}
+bc_trans <- function(y, l) if (abs(l) < 1e-8) log(y) else (y^l - 1) / l
+bc_inv   <- function(z, l) if (abs(l) < 1e-8) exp(z) else pmax(l * z + 1, 0)^(1 / l)
+
+train$Performance_BC <- bc_trans(train$Performance_Index, lambda)
+modelo_bc <- lm(update(formula(modelo_bic), Performance_BC ~ .), data = train)
+train$Performance_BC <- NULL
+
+res_bc <- residuals(modelo_bc)
+lil_bc <- lillie.test(res_bc)
+lil_bc
+bp_bc <- lmtest::bptest(modelo_bc)
+bp_bc
+```
+
+```{r}
+car::qqPlot(res_bc, las = 1, id = FALSE,
+            xlab = "Cuantiles teóricos", ylab = "Residuales",
+            main = "Gráfico Q-Q de los residuales del modelo Box-Cox")
+```
+
+Al aplicar Box-Cox ($\lambda = `r lambda`$), los residuales pasan a incumplir tanto la normalidad (Lilliefors $D = `r fm(lil_bc$statistic, 5)`$, p valor `r fp(lil_bc$p.value)`) como la homocedasticidad (Breusch-Pagan $BP = `r fm(bp_bc$statistic, 2)`$, p valor `r fp(bp_bc$p.value)`), deformando la relación lineal aditiva que existe de forma natural en la escala original de Performance Index. Por lo tanto, se descarta la transformación y se mantiene el modelo en su escala original.
+
+Comparación de modelos
+
+Se comparan los modelos ajustados en el conjunto de prueba (`r fmil(nrow(test))` estudiantes no utilizados en el entrenamiento) mediante $RMSE$, $MAE$ y $R^2$ predictivo.
+
+```{r}
+y_te <- test$Performance_Index
+media_tr <- mean(train$Performance_Index)
+
+pred <- list(
+  "Nulo"                     = rep(media_tr, nrow(test)),
+  "Simple (Previous Scores)" = predict(modelo_rls, test),
+  "Completo"                 = predict(modelo_full, test),
+  "Seleccionado (BIC)"       = predict(modelo_bic, test),
+  "Seleccionado (AIC)"       = predict(sel_aic, test),
+  "Box-Cox (BIC)"            = bc_inv(predict(modelo_bc, test), lambda)
+)
+mods <- list(modelo_nulo, modelo_rls, modelo_full, modelo_bic, sel_aic, modelo_bc)
+
+comp <- tibble(
+  Modelo = names(pred),
+  p = sapply(mods, function(m) length(coef(m))),
+  r2aj = sapply(mods, function(m) summary(m)$adj.r.squared),
+  AIC = c(sapply(mods[1:5], AIC), NA),
+  BIC = c(sapply(mods[1:5], BIC), NA),
+  RMSE = sapply(pred, function(pr) sqrt(mean((y_te - pr)^2))),
+  MAE  = sapply(pred, function(pr) mean(abs(y_te - pr))),
+  r2p  = sapply(pred, function(pr) 1 - sum((y_te - pr)^2) / sum((y_te - media_tr)^2))
+)
+
+comp %>%
+  rename(`$p$` = p, `$R^2_{aj}$ (entrenamiento)` = r2aj,
+         `RMSE (prueba)` = RMSE, `MAE (prueba)` = MAE, `$R^2$ (prueba)` = r2p) %>%
+  tabla_rlm("Comparación de los modelos ajustados")
+
+rmse <- setNames(comp$RMSE, comp$Modelo)
+mae  <- setNames(comp$MAE, comp$Modelo)
+r2p  <- setNames(comp$r2p, comp$Modelo)
+mejora_rmse <- 100 * (1 - rmse["Seleccionado (BIC)"] / rmse["Nulo"])
+```
+
+Validación cruzada y prueba final
+
+```{r}
+tabla_rlm(cv, "Validación cruzada de cinco pliegues en entrenamiento")
+ganador_cv <- cv$Modelo[which.min(cv$RMSE)]
+mejora_cv <- 100 * (1 - min(cv$RMSE) / cv$RMSE[cv$Modelo == "Nulo"])
+```
+
+Según la validación cruzada de cinco pliegues, `r ganador_cv` (junto con el modelo completo y AIC, al seleccionar las mismas 5 variables) obtuvo el menor error de validación ($RMSE = `r fm(min(cv$RMSE), 4)`$), reduciendo el error en un `r fm(mejora_cv, 2)` % respecto al modelo nulo.
+
+::: {#resultados-ejecutivos}
+El modelo seleccionado por BIC obtuvo en prueba un RMSE de `r fm(rmse["Seleccionado (BIC)"], 2)`, frente a `r fm(rmse["Nulo"], 2)` del promedio. La mejora fue de `r fm(mejora_rmse, 2)` % y el R² predictivo, medido frente al promedio de entrenamiento, fue `r fm(r2p["Seleccionado (BIC)"])`.
+
+```{r}
+tres_modelos <- comp[c(1, 4, 5), c("Modelo", "RMSE", "MAE", "r2p")]
+names(tres_modelos)[4] <- "R² de prueba"
+tabla_rlm(tres_modelos, "Resultados en el conjunto de prueba")
+```
+
+```{r comparacion-rmse}
+ggplot(tres_modelos, aes(x = RMSE, y = reorder(Modelo, RMSE))) +
+  geom_point(size = 3, colour = "#24576c") +
+  labs(x = "RMSE en prueba (puntos de Performance Index)", y = NULL,
+       subtitle = "Una distancia menor corresponde a un menor error") +
+  theme_minimal(base_size = 12)
+```
+
+```{r }
+modelo_final <- modelo_bic
+rm(sel_aic, modelo_bc, modelo_rls, res_bc, pred); invisible(gc())
+```
+
+Modelo final
+
+El modelo final ajustado es:
+
+$$`r ecuacion_latex(modelo_final, train)`$$
+
+```{r}
+coef_fin <- coef_robustos(modelo_final)[-1, ]
+tibble(`Término` = sapply(coef_fin$term, etiqueta, datos = train),
+       `Estimación` = coef_fin$estimate,
+       `IC 2.5%` = coef_fin$conf.low, `IC 97.5%` = coef_fin$conf.high,
+       `p valor` = coef_fin$p.value,
+       `Interpretación` = interpretar(modelo_final, train)) %>%
+  tabla_rlm("Interpretación de los coeficientes del modelo final",
+            p_cols = "p valor", align = "lccccl")
+```
+
+El intercepto, $\hat\beta_0 = `r fm(coef(modelo_final)[1], 2)`$, constituye el término de ajuste base del plano de regresión cuando todas las variables toman valor cero (punto de referencia teórico fuera del dominio observado, ya que Previous Scores inicia en 40 y Sleep Hours en 4). En términos de impacto marginal:
+
+Hours Studied es el factor modificable con mayor pendiente por unidad: cada hora adicional de estudio diaria incrementa el rendimiento promedio en `r fm(coef(modelo_final)["Hours_Studied"], 2)` puntos (un estudiante que estudia 9 horas obtiene en promedio cerca de `r fm(8 * coef(modelo_final)["Hours_Studied"], 1)` puntos más que uno que estudia 1 hora, manteniendo todo lo demás constante).
+
+Previous Scores aporta `r fm(coef(modelo_final)["Previous_Scores"], 2)` puntos por cada punto adicional en las calificaciones previas, trasladando casi 1 a 1 la base académica previa del estudiante.
+
+Extracurricular Activities suma en promedio `r fm(coef(modelo_final)["Extracurricular_ActivitiesYes"], 2)` puntos a quienes participan en actividades extracurriculares frente a quienes no lo hacen.
+
+Sleep Hours aporta `r fm(coef(modelo_final)["Sleep_Hours"], 2)` puntos por cada hora adicional de descanso diario.
+
+Sample Question Papers Practiced incrementa el rendimiento en `r fm(coef(modelo_final)["Sample_Question_Papers_Practiced"], 2)` puntos por cada cuestionario de práctica resuelto.
+
+Inferencia para la respuesta
+
+Como ejemplo práctico, se estima el índice de rendimiento de un estudiante con un perfil típico: el valor mediano en cada variable numérica y la categoría más frecuente en Extracurricular Activities.
+
+```{r}
+moda <- function(x) names(which.max(table(x)))
+
+dato_nuevo <- train %>%
+  dplyr::select(-Performance_Index) %>%
+  summarise(across(where(is.numeric), median),
+            across(where(is.factor), ~ factor(moda(.x), levels = levels(.x))))
+
+tibble(Variable = gsub("_", " ", names(dato_nuevo)),
+       Valor = sapply(dato_nuevo, function(x) as.character(x))) %>%
+  filter(gsub(" ", "_", Variable) %in% vars_bic) %>%
+  tabla_rlm("Perfil del estudiante típico (variables del modelo final)")
+```
+
+Se calculan el intervalo de confianza del 95 % para la media condicional $E[Y \mid \mathbf{x}_0]$ y el intervalo de predicción del 95 % para un estudiante individual nuevo $Y_0$:
+
+```{r}
+ic_media <- predict(modelo_final, newdata = dato_nuevo, interval = "confidence")
+ic_pred  <- predict(modelo_final, newdata = dato_nuevo, interval = "prediction")
+
+tibble(Intervalo = c("Confianza para la media", "Predicción para un estudiante nuevo"),
+       `Estimación` = c(ic_media[1, "fit"], ic_pred[1, "fit"]),
+       `Límite inferior` = c(ic_media[1, "lwr"], ic_pred[1, "lwr"]),
+       `Límite superior` = c(ic_media[1, "upr"], ic_pred[1, "upr"])) %>%
+  tabla_rlm("Intervalos del 95% para el rendimiento del estudiante típico")
+```
+
+Para un estudiante con este perfil (Hours Studied = 5, Previous Scores = 69, Extracurricular Activities = "No", Sleep Hours = 7 y Sample Question Papers Practiced = 5), se estima un índice de rendimiento esperado de `r fm(ic_media[1, "fit"], 2)` puntos, con un intervalo de confianza del 95 % para la media de $(`r fm(ic_media[1, "lwr"], 2)`, `r fm(ic_media[1, "upr"], 2)`)$. Para un estudiante individual nuevo con ese mismo perfil, el intervalo de predicción del 95 % es $(`r fm(ic_pred[1, "lwr"], 2)`, `r fm(ic_pred[1, "upr"], 2)`)$, con una amplitud total de apenas `r fm(ic_pred[1, "upr"] - ic_pred[1, "lwr"], 2)` puntos dentro de una escala de 10 a 100. Dado que se cumplen los supuestos de normalidad y homocedasticidad de los errores, estos intervalos son bien calibrados y reflejan una alta precisión predictiva.
+
+Conclusiones del capítulo
+
+El modelo de regresión lineal múltiple explica el `r fm(100 * r2aj_bic, 2)`% de la variabilidad de Performance Index ($R^2_{aj} = `r fm(r2aj_bic)`$) y reduce el error de predicción en prueba en un `r fm(mejora_rmse, 2)`% frente al modelo basado en el promedio ($RMSE = `r fm(rmse["Seleccionado (BIC)"], 2)`$ frente a `r fm(rmse["Nulo"], 2)`). Las cinco variables predictoras (Hours Studied, Previous Scores, Extracurricular Activities, Sleep Hours y Sample Question Papers Practiced) son retenidas tanto por BIC como por AIC y resultan estadísticamente significativas ($p < 0.001$).
+
+Asimismo, el análisis diagnóstico confirma el cumplimiento de todos los supuestos del modelo clásico: ausencia de multicolinealidad ($VIF \approx 1.00$, $ICN = `r fm(icn, 2)`$), independencia de los errores ($DW = `r fm(dw$statistic)`$), normalidad de los residuales (Lilliefors $p = `r fm(lil_res$p.value, 4)`$) y homocedasticidad (Breusch-Pagan $p = `r fm(bp_bic$p.value, 4)`$). En conjunto, los resultados demuestran que el desempeño académico en este conjunto de datos responde a una estructura lineal aditiva bien definida, donde la base académica previa (Previous Scores) y el tiempo dedicado al estudio (Hours Studied) constituyen los pilares principales, complementados de manera positiva por el descanso adecuado, la resolución de cuestionarios de práctica y la participación extracurricular.

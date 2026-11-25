@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Factores asociados al rendimiento académico</title>
+  <meta name="description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  <meta name="generator" content="bookdown 0.47 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Factores asociados al rendimiento académico" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Factores asociados al rendimiento académico" />
+  
+  <meta name="twitter:description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  
+
+<meta name="author" content="Ronald Díaz y Luis Salgado" />
+
+
+<meta name="date" content="2026-11-25" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+<link rel="next" href="intro.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="libs/bsTable-3.3.7/bootstrapTable.min.css" rel="stylesheet" />
+<script src="libs/bsTable-3.3.7/bootstrapTable.js"></script>
+
+
+<style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Factores asociados al rendimiento académico</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introducción</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#resumen-ejecutivo"><i class="fa fa-check"></i><b>1.1</b> Resumen ejecutivo</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#datos-y-alcance"><i class="fa fa-check"></i><b>1.2</b> Datos y alcance</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#contexto-y-objetivos"><i class="fa fa-check"></i><b>1.3</b> Contexto y objetivos</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#objetivo-general"><i class="fa fa-check"></i><b>1.4</b> Objetivo general</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#objetivos-espec%C3%ADficos"><i class="fa fa-check"></i><b>1.5</b> Objetivos específicos</a></li>
+<li class="chapter" data-level="1.6" data-path="index.html"><a href="index.html#metodolog%C3%ADa"><i class="fa fa-check"></i><b>1.6</b> Metodología</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>2</b> Análisis Exploratorio de Datos (EDA)</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="intro.html"><a href="intro.html#clasificaci%C3%B3n-de-las-variables"><i class="fa fa-check"></i><b>2.1</b> Clasificación de las variables</a></li>
+<li class="chapter" data-level="2.2" data-path="intro.html"><a href="intro.html#revisi%C3%B3n-de-datos-faltantes-en-las-variables"><i class="fa fa-check"></i><b>2.2</b> Revisión de datos faltantes en las variables</a></li>
+<li class="chapter" data-level="2.3" data-path="intro.html"><a href="intro.html#conversi%C3%B3n-de-variables-de-tipo-car%C3%A1cter-a-factor"><i class="fa fa-check"></i><b>2.3</b> Conversión de variables de tipo carácter a factor</a></li>
+<li class="chapter" data-level="2.4" data-path="intro.html"><a href="intro.html#an%C3%A1lisis-de-la-variable-respuesta-performance-index"><i class="fa fa-check"></i><b>2.4</b> Análisis de la variable respuesta (Performance Index)</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="intro.html"><a href="intro.html#resumen-estad%C3%ADstico"><i class="fa fa-check"></i><b>2.4.1</b> Resumen estadístico</a></li>
+<li class="chapter" data-level="2.4.2" data-path="intro.html"><a href="intro.html#distribuci%C3%B3n"><i class="fa fa-check"></i><b>2.4.2</b> Distribución</a></li>
+<li class="chapter" data-level="2.4.3" data-path="intro.html"><a href="intro.html#valores-at%C3%ADpicos"><i class="fa fa-check"></i><b>2.4.3</b> Valores atípicos</a></li>
+<li class="chapter" data-level="2.4.4" data-path="intro.html"><a href="intro.html#conclusi%C3%B3n-sobre-la-variable-respuesta"><i class="fa fa-check"></i><b>2.4.4</b> Conclusión sobre la variable respuesta</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="intro.html"><a href="intro.html#resumen-de-las-dem%C3%A1s-variables-num%C3%A9ricas"><i class="fa fa-check"></i><b>2.5</b> Resumen de las demás variables numéricas</a></li>
+<li class="chapter" data-level="2.6" data-path="intro.html"><a href="intro.html#an%C3%A1lisis-de-las-variables-independientes-caracter%C3%ADsticas"><i class="fa fa-check"></i><b>2.6</b> Análisis de las variables independientes (características)</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html"><a href="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html"><i class="fa fa-check"></i><b>3</b> Pruebas de hipótesis paramétricas y no paramétricas</a></li>
+<li class="chapter" data-level="4" data-path="rlm.html"><a href="rlm.html"><i class="fa fa-check"></i><b>4</b> Modelo de regresión lineal múltiple</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/luisangel23-cell/metodos-trabajo-final" target="_blank">Ver repositorio en GitHub</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Factores asociados al rendimiento académico</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="header">
+<h1 class="title">Factores asociados al rendimiento académico</h1>
+<p class="author"><em>Ronald Díaz y Luis Salgado</em></p>
+<p class="date"><em>2026-11-25</em></p>
+</div>
+<div id="introducción" class="section level1 hasAnchor" number="1">
+<h1><span class="header-section-number">Capítulo 1</span> Introducción<a href="index.html#introducci%C3%B3n" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="resumen-ejecutivo" class="section level2 hasAnchor" number="1.1">
+<h2><span class="header-section-number">1.1</span> Resumen ejecutivo<a href="index.html#resumen-ejecutivo" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p><strong>Pregunta.</strong> ¿Cuánto mejora la estimación del índice de rendimiento académico cuando incorporamos los hábitos de estudio y los antecedentes previos de los estudiantes?</p>
+<p>El análisis abarca <strong>10,000 registros</strong> y 6 variables del conjunto de datos de rendimiento estudiantil (<code>Student_Performance.csv</code>). A diferencia de escenarios con alto ruido no explicado, el modelo de regresión lineal múltiple explica cerca del <strong>98.9 %</strong> de la variabilidad de <code>Performance Index</code> y reduce el error de predicción en alrededor del <strong>89.6 %</strong> frente a predecir el promedio general. La conclusión se limita a estos datos y a los modelos evaluados.</p>
+<div id="resumen-portada" class="resumen-portada" aria-live="polite">
+<p>
+<a href="rlm.html#resultados-ejecutivos">Ver las métricas del promedio, BIC y AIC</a>
+</p>
+</div>
+<script>
+(function () {
+  const resumen = document.getElementById("resumen-portada");
+  if (!resumen) return;
+  fetch("rlm.html")
+    .then(function (response) {
+      if (!response.ok) throw new Error("Resultados no disponibles");
+      return response.text();
+    })
+    .then(function (html) {
+      const resultados = new DOMParser()
+        .parseFromString(html, "text/html")
+        .getElementById("resultados-ejecutivos");
+      if (resultados) resumen.replaceChildren(...resultados.childNodes);
+    })
+    .catch(function () {});
+})();
+</script>
+<div class="graficos-portada">
+<figure>
+<a href="intro.html#distribuci%C3%B3n"><img src="analisis-seguros_files/figure-html/histograma-respuesta-1.png" alt="Histograma del índice de rendimiento académico"></a>
+<figcaption>
+Distribución del rendimiento
+</figcaption>
+</figure>
+<figure>
+<a href="rlm.html#comparaci%C3%B3n-de-modelos"><img src="analisis-seguros_files/figure-html/comparacion-rmse-1.png" alt="Comparación del RMSE del promedio, BIC y AIC"></a>
+<figcaption>
+Error en prueba
+</figcaption>
+</figure>
+<figure>
+<a href="rlm.html#varianza-constante-de-los-errores"><img src="analisis-seguros_files/figure-html/res-vs-ajustados-1.png" alt="Gráfico de residuales frente a valores ajustados"></a>
+<figcaption>
+Diagnóstico de residuales
+</figcaption>
+</figure>
+</div>
+</div>
+<div id="datos-y-alcance" class="section level2 hasAnchor" number="1.2">
+<h2><span class="header-section-number">1.2</span> Datos y alcance<a href="index.html#datos-y-alcance" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Aspecto</th>
+<th align="left">Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Fuente</td>
+<td align="left">Conjunto de datos de rendimiento estudiantil (<code>Student_Performance.csv</code>).</td>
+</tr>
+<tr class="even">
+<td align="left">Unidad de análisis</td>
+<td align="left">Registro individual de estudiante. La variable objetivo es <code>Performance Index</code>.</td>
+</tr>
+<tr class="odd">
+<td align="left">Variables excluidas del modelo</td>
+<td align="left">Ninguna (las 5 variables predictoras disponibles ingresan al análisis).</td>
+</tr>
+<tr class="even">
+<td align="left">Datos faltantes</td>
+<td align="left">El dataset está completo (0 valores faltantes en las 6 variables). En predicción, las referencias se calculan solo con los datos de ajuste de cada partición.</td>
+</tr>
+<tr class="odd">
+<td align="left">Alcance</td>
+<td align="left">Evaluación interna en una partición aleatoria (80 % entrenamiento / 20 % prueba). El diseño permite estudiar asociaciones y capacidad predictiva interna, con validación externa pendiente.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="contexto-y-objetivos" class="section level2 hasAnchor" number="1.3">
+<h2><span class="header-section-number">1.3</span> Contexto y objetivos<a href="index.html#contexto-y-objetivos" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>El presente trabajo tiene como objetivo realizar un análisis estadístico completo
+sobre un conjunto de datos relacionado con el desempeño académico de estudiantes,
+el cual contiene 10,000 registros y 6 variables que recogen hábitos de estudio,
+descanso, práctica previa y participación extracurricular. Entre estas variables
+se encuentran las horas dedicadas al estudio (<code>Hours Studied</code>), las calificaciones
+obtenidas previamente (<code>Previous Scores</code>), la participación en actividades
+extracurriculares (<code>Extracurricular Activities</code>), las horas diarias de sueño
+(<code>Sleep Hours</code>) y la cantidad de cuestionarios de práctica resueltos
+(<code>Sample Question Papers Practiced</code>), con el fin de comprender su comportamiento
+y su relación con el índice de rendimiento académico (<code>Performance Index</code>), que
+constituye la variable respuesta principal del estudio.</p>
+<p>Este tipo de análisis resulta relevante dentro del ámbito educativo, ya que permite
+cuantificar de manera objetiva qué factores académicos y hábitos personales tienen
+un impacto real sobre el desempeño estudiantil, distinguiendo entre variables con
+alta capacidad explicativa individual (como las calificaciones previas y las horas
+de estudio) y factores cuyo aporte es más sutil o solo se aprecia claramente al
+controlar simultáneamente por el resto de las características del estudiante.</p>
+<p>Para alcanzar este objetivo, se lleva a cabo inicialmente un análisis exploratorio
+de datos (EDA), que permite conocer la estructura del dataset, verificar la
+integridad de los registros (confirmando la ausencia de valores faltantes),
+convertir la variable categórica <code>Extracurricular Activities</code> a factor, y
+caracterizar tanto las variables numéricas como categóricas de forma individual,
+así como en conjunto con la variable respuesta y entre sí.</p>
+<p>A partir de los patrones detectados durante esta etapa exploratoria —entre ellos
+una distribución simétrica y platicúrtica en <code>Performance Index</code>, distribuciones
+uniformes en las variables predictoras numéricas, una fuerte asociación lineal
+positiva entre <code>Previous Scores</code> y <code>Performance Index</code>, una asociación moderada
+con <code>Hours Studied</code>, y ausencia de correlación entre los predictores— se plantean
+pruebas de hipótesis formales para confirmar estadísticamente estas relaciones
+y medir su magnitud mediante tamaños del efecto.</p>
+<p>Finalmente, en una tercera etapa se construye un modelo de regresión lineal
+múltiple que incorpora todos los predictores de forma conjunta, con el fin de
+evaluar cuánto mejora la predicción respecto a un modelo simple o al promedio
+general, seleccionar el mejor subconjunto de variables y validar el cumplimiento
+de los supuestos clásicos del modelo lineal.</p>
+</div>
+<div id="objetivo-general" class="section level2 hasAnchor" number="1.4">
+<h2><span class="header-section-number">1.4</span> Objetivo general<a href="index.html#objetivo-general" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Predecir el índice de rendimiento académico (<code>Performance Index</code>) a partir de los hábitos de estudio, descanso, práctica y antecedentes académicos de los estudiantes. Para ello, primero se evalúa qué variables presentan una asociación estadísticamente significativa y prácticamente relevante con el rendimiento, y luego se construye y evalúa un modelo de regresión lineal múltiple que las incorpore de forma conjunta.</p>
+<p>Este enfoque parte de una distinción central a lo largo del trabajo: la significancia estadística y la relevancia práctica no son lo mismo. Dado el tamaño de la muestra (10,000 observaciones), diferencias pequeñas entre grupos o correlaciones muy débiles pueden resultar estadísticamente significativas, por lo que responder únicamente si una prueba rechaza o no rechaza <span class="math inline">\(H_0\)</span> sería insuficiente sin acompañar cada contraste con una medida de tamaño del efecto.</p>
+</div>
+<div id="objetivos-específicos" class="section level2 hasAnchor" number="1.5">
+<h2><span class="header-section-number">1.5</span> Objetivos específicos<a href="index.html#objetivos-espec%C3%ADficos" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ol style="list-style-type: decimal">
+<li>Caracterizar la estructura del conjunto de datos, verificando la integridad de sus 10,000 registros y 6 variables y confirmando la ausencia de valores faltantes.</li>
+<li>Describir, mediante análisis univariado y bivariado, el comportamiento de las 5 variables predictoras (1 categórica y 4 numéricas) y su relación visual con <code>Performance Index</code>.</li>
+<li>Verificar los supuestos de normalidad y de homogeneidad de varianzas para seleccionar, en cada caso, la prueba de hipótesis paramétrica o no paramétrica adecuada.</li>
+<li>Contrastar mediante pruebas de hipótesis la asociación entre cada variable predictora y <code>Performance Index</code>.</li>
+<li>Cuantificar la relevancia práctica de las asociaciones detectadas mediante medidas de tamaño del efecto (<span class="math inline">\(r\)</span> de Wilcoxon y <span class="math inline">\(\rho\)</span> de Spearman) e intervalos de confianza para <span class="math inline">\(\rho\)</span>.</li>
+<li>Evaluar las relaciones entre las variables predictoras numéricas (6 pares de variables) para descartar posibles problemas de multicolinealidad.</li>
+<li>Ajustar un modelo de regresión lineal múltiple, seleccionar las variables mediante métodos secuenciales y validar los supuestos del modelo.</li>
+<li>Evaluar la capacidad predictiva del modelo final en un conjunto de prueba y compararla con la de modelos alternativos.</li>
+</ol>
+</div>
+<div id="metodología" class="section level2 hasAnchor" number="1.6">
+<h2><span class="header-section-number">1.6</span> Metodología<a href="index.html#metodolog%C3%ADa" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>El análisis se desarrolló en el lenguaje R mediante un enfoque cuantitativo, descriptivo e inferencial, y se organizó en cuatro etapas.</p>
+<p><strong>Etapa 1. Preparación de los datos.</strong> Se trabajó con 10,000 registros y 6 variables. Se verificó la presencia de valores faltantes en todas las columnas, comprobando que el conjunto de datos está 100 % completo (0 valores <code>NA</code>). La variable categórica <code>Extracurricular Activities</code> se convirtió a factor con niveles <code>"No"</code> y <code>"Yes"</code>.</p>
+<p><strong>Etapa 2. Análisis exploratorio (EDA).</strong> Se resumieron las variables numéricas con medidas de tendencia central, dispersión, asimetría y curtosis. Se construyeron histogramas, diagramas de barras y boxplots para el análisis univariado, y diagramas de dispersión, boxplots agrupados y una matriz de correlación de Spearman para el análisis bivariado frente a <code>Performance Index</code> y entre predictores. Todos los gráficos, tablas y estimaciones del EDA se calcularon con los 10,000 registros.</p>
+<p><strong>Etapa 3. Inferencia estadística.</strong> Todas las pruebas se realizaron con un nivel de significancia <span class="math inline">\(\alpha = 0.05\)</span> (confianza del 95 %), siguiendo este esquema:</p>
+<ol style="list-style-type: decimal">
+<li><em>Normalidad.</em> Se aplicó la prueba de Lilliefors a cada grupo o variable, ya que, a diferencia de Shapiro-Wilk, no tiene límite de 5,000 observaciones.</li>
+<li><em>Homogeneidad de varianzas.</em> Se utilizó la prueba de Levene (centrada en la mediana) en la comparación entre grupos de <code>Extracurricular Activities</code>.</li>
+<li><em>Selección de la prueba.</em>
+<ul>
+<li>Categórica de dos niveles frente a <code>Performance Index</code>: prueba t de Student si hay normalidad, o Mann-Whitney-Wilcoxon en caso contrario.</li>
+<li>Dos variables numéricas: correlación de Pearson si ambas variables son normales, o de Spearman en caso contrario, con un intervalo de confianza del 95 % para <span class="math inline">\(\rho\)</span> basado en la transformación de Fisher con el error estándar de Bonett y Wright.</li>
+</ul></li>
+<li><em>Tamaño del efecto.</em> Se calculó <span class="math inline">\(r\)</span> (Mann-Whitney-Wilcoxon) y <span class="math inline">\(\rho\)</span> (Spearman), para evaluar la relevancia práctica más allá del p valor.</li>
+<li><em>Criterio de decisión.</em> Una variable se considera relevante a nivel individual solo si cumple ambos criterios: rechazo de <span class="math inline">\(H_0\)</span> y tamaño del efecto no despreciable.</li>
+</ol>
+<p>Como el supuesto de normalidad univariada no se cumplió en ninguna variable debido a sus formas uniformes o platicúrticas, las hipótesis de las pruebas no paramétricas se plantean en términos de medianas o de igualdad de distribuciones, según corresponda.</p>
+<p><strong>Etapa 4. Regresión lineal múltiple.</strong> Los registros se dividieron aleatoriamente en entrenamiento (80 %, 8,000 estudiantes) y prueba (20 %, 2,000 estudiantes). Se compararon seis procedimientos con validación cruzada de cinco pliegues en entrenamiento, calculando las referencias de preprocesamiento dentro de cada pliegue. El rendimiento final se midió en prueba mediante RMSE, MAE y un <span class="math inline">\(R^2\)</span> predictivo frente al promedio de entrenamiento. Para describir el modelo se informan tamaños de efecto, intervalos de confianza robustos HC1 y diagnósticos de residuos. Box–Cox se examina como diagnóstico adicional.</p>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+<a href="intro.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": true,
+    "facebook": false,
+    "twitter": false,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": "github"
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": "https://github.com/luisangel23-cell/metodos-trabajo-final/edit/main/index.Rmd",
+    "text": "Edit"
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": null,
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

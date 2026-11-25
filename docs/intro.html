@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Capítulo 2 Análisis Exploratorio de Datos (EDA) | Factores asociados al rendimiento académico</title>
+  <meta name="description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  <meta name="generator" content="bookdown 0.47 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Capítulo 2 Análisis Exploratorio de Datos (EDA) | Factores asociados al rendimiento académico" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Capítulo 2 Análisis Exploratorio de Datos (EDA) | Factores asociados al rendimiento académico" />
+  
+  <meta name="twitter:description" content="Análisis exploratorio de datos, pruebas de hipótesis paramétricas y no paramétricas y modelo de regresión lineal múltiple para evaluar la asociación estadística, la relevancia práctica y la capacidad predictiva de los hábitos de estudio y antecedentes académicos sobre el índice de rendimiento estudiantil." />
+  
+
+<meta name="author" content="Ronald Díaz y Luis Salgado" />
+
+
+<meta name="date" content="2026-11-25" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="index.html"/>
+<link rel="next" href="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="libs/bsTable-3.3.7/bootstrapTable.min.css" rel="stylesheet" />
+<script src="libs/bsTable-3.3.7/bootstrapTable.js"></script>
+
+
+<style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Factores asociados al rendimiento académico</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introducción</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#resumen-ejecutivo"><i class="fa fa-check"></i><b>1.1</b> Resumen ejecutivo</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#datos-y-alcance"><i class="fa fa-check"></i><b>1.2</b> Datos y alcance</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#contexto-y-objetivos"><i class="fa fa-check"></i><b>1.3</b> Contexto y objetivos</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#objetivo-general"><i class="fa fa-check"></i><b>1.4</b> Objetivo general</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#objetivos-espec%C3%ADficos"><i class="fa fa-check"></i><b>1.5</b> Objetivos específicos</a></li>
+<li class="chapter" data-level="1.6" data-path="index.html"><a href="index.html#metodolog%C3%ADa"><i class="fa fa-check"></i><b>1.6</b> Metodología</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>2</b> Análisis Exploratorio de Datos (EDA)</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="intro.html"><a href="intro.html#clasificaci%C3%B3n-de-las-variables"><i class="fa fa-check"></i><b>2.1</b> Clasificación de las variables</a></li>
+<li class="chapter" data-level="2.2" data-path="intro.html"><a href="intro.html#revisi%C3%B3n-de-datos-faltantes-en-las-variables"><i class="fa fa-check"></i><b>2.2</b> Revisión de datos faltantes en las variables</a></li>
+<li class="chapter" data-level="2.3" data-path="intro.html"><a href="intro.html#conversi%C3%B3n-de-variables-de-tipo-car%C3%A1cter-a-factor"><i class="fa fa-check"></i><b>2.3</b> Conversión de variables de tipo carácter a factor</a></li>
+<li class="chapter" data-level="2.4" data-path="intro.html"><a href="intro.html#an%C3%A1lisis-de-la-variable-respuesta-performance-index"><i class="fa fa-check"></i><b>2.4</b> Análisis de la variable respuesta (Performance Index)</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="intro.html"><a href="intro.html#resumen-estad%C3%ADstico"><i class="fa fa-check"></i><b>2.4.1</b> Resumen estadístico</a></li>
+<li class="chapter" data-level="2.4.2" data-path="intro.html"><a href="intro.html#distribuci%C3%B3n"><i class="fa fa-check"></i><b>2.4.2</b> Distribución</a></li>
+<li class="chapter" data-level="2.4.3" data-path="intro.html"><a href="intro.html#valores-at%C3%ADpicos"><i class="fa fa-check"></i><b>2.4.3</b> Valores atípicos</a></li>
+<li class="chapter" data-level="2.4.4" data-path="intro.html"><a href="intro.html#conclusi%C3%B3n-sobre-la-variable-respuesta"><i class="fa fa-check"></i><b>2.4.4</b> Conclusión sobre la variable respuesta</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="intro.html"><a href="intro.html#resumen-de-las-dem%C3%A1s-variables-num%C3%A9ricas"><i class="fa fa-check"></i><b>2.5</b> Resumen de las demás variables numéricas</a></li>
+<li class="chapter" data-level="2.6" data-path="intro.html"><a href="intro.html#an%C3%A1lisis-de-las-variables-independientes-caracter%C3%ADsticas"><i class="fa fa-check"></i><b>2.6</b> Análisis de las variables independientes (características)</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html"><a href="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html"><i class="fa fa-check"></i><b>3</b> Pruebas de hipótesis paramétricas y no paramétricas</a></li>
+<li class="chapter" data-level="4" data-path="rlm.html"><a href="rlm.html"><i class="fa fa-check"></i><b>4</b> Modelo de regresión lineal múltiple</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/luisangel23-cell/metodos-trabajo-final" target="_blank">Ver repositorio en GitHub</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Factores asociados al rendimiento académico</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="intro" class="section level1 hasAnchor" number="2">
+<h1><span class="header-section-number">Capítulo 2</span> Análisis Exploratorio de Datos (EDA)<a href="intro.html#intro" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>Primeramente, realizaremos un análisis exploratorio de los datos para comprender la estructura, distribución y relaciones presentes en el conjunto de rendimiento estudiantil.</p>
+<p>Librerías</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="intro.html#cb1-1" tabindex="-1"></a><span class="cf">if</span> (.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;windows&quot;</span>) {</span>
+<span id="cb1-2"><a href="intro.html#cb1-2" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="fu">Sys.setlocale</span>(<span class="st">&quot;LC_CTYPE&quot;</span>, <span class="st">&quot;Spanish_Colombia.utf8&quot;</span>))</span>
+<span id="cb1-3"><a href="intro.html#cb1-3" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="intro.html#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="intro.html#cb1-5" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-6"><a href="intro.html#cb1-6" tabindex="-1"></a><span class="fu">library</span>(Amelia)</span>
+<span id="cb1-7"><a href="intro.html#cb1-7" tabindex="-1"></a><span class="fu">library</span>(moments)</span>
+<span id="cb1-8"><a href="intro.html#cb1-8" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-9"><a href="intro.html#cb1-9" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-10"><a href="intro.html#cb1-10" tabindex="-1"></a><span class="fu">library</span>(GGally)</span>
+<span id="cb1-11"><a href="intro.html#cb1-11" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-12"><a href="intro.html#cb1-12" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-13"><a href="intro.html#cb1-13" tabindex="-1"></a><span class="fu">library</span>(car)</span>
+<span id="cb1-14"><a href="intro.html#cb1-14" tabindex="-1"></a><span class="fu">library</span>(rstatix)</span>
+<span id="cb1-15"><a href="intro.html#cb1-15" tabindex="-1"></a><span class="fu">library</span>(coin)</span>
+<span id="cb1-16"><a href="intro.html#cb1-16" tabindex="-1"></a><span class="fu">library</span>(nortest)</span>
+<span id="cb1-17"><a href="intro.html#cb1-17" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-18"><a href="intro.html#cb1-18" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-19"><a href="intro.html#cb1-19" tabindex="-1"></a><span class="fu">options</span>(<span class="at">knitr.table.format =</span> <span class="st">&quot;html&quot;</span>)</span>
+<span id="cb1-20"><a href="intro.html#cb1-20" tabindex="-1"></a><span class="fu">library</span>(broom)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="intro.html#cb2-1" tabindex="-1"></a>etiq_hist <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">bins =</span> <span class="cn">NULL</span>, <span class="at">binwidth =</span> <span class="cn">NULL</span>, <span class="at">boundary =</span> <span class="cn">NULL</span>, <span class="at">size =</span> <span class="fl">2.6</span>) {</span>
+<span id="cb2-2"><a href="intro.html#cb2-2" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb2-3"><a href="intro.html#cb2-3" tabindex="-1"></a>    <span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">&quot;bin&quot;</span>, <span class="at">bins =</span> bins, <span class="at">binwidth =</span> binwidth, <span class="at">boundary =</span> boundary,</span>
+<span id="cb2-4"><a href="intro.html#cb2-4" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">y =</span> <span class="fu">after_stat</span>(count),</span>
+<span id="cb2-5"><a href="intro.html#cb2-5" tabindex="-1"></a>                  <span class="at">label =</span> <span class="fu">ifelse</span>(<span class="fu">after_stat</span>(count) <span class="sc">==</span> <span class="dv">0</span>, <span class="st">&quot;&quot;</span>,</span>
+<span id="cb2-6"><a href="intro.html#cb2-6" tabindex="-1"></a>                                 scales<span class="sc">::</span><span class="fu">comma</span>(<span class="fu">after_stat</span>(count)))),</span>
+<span id="cb2-7"><a href="intro.html#cb2-7" tabindex="-1"></a>              <span class="at">angle =</span> <span class="dv">90</span>, <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.15</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>, <span class="at">size =</span> size),</span>
+<span id="cb2-8"><a href="intro.html#cb2-8" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>comma, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.16</span>)))</span>
+<span id="cb2-9"><a href="intro.html#cb2-9" tabindex="-1"></a>  )</span>
+<span id="cb2-10"><a href="intro.html#cb2-10" tabindex="-1"></a>}</span>
+<span id="cb2-11"><a href="intro.html#cb2-11" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="intro.html#cb2-12" tabindex="-1"></a>etiq_barras <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">size =</span> <span class="fl">3.2</span>) {</span>
+<span id="cb2-13"><a href="intro.html#cb2-13" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb2-14"><a href="intro.html#cb2-14" tabindex="-1"></a>    <span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">&quot;count&quot;</span>,</span>
+<span id="cb2-15"><a href="intro.html#cb2-15" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">label =</span> scales<span class="sc">::</span><span class="fu">comma</span>(<span class="fu">after_stat</span>(count))),</span>
+<span id="cb2-16"><a href="intro.html#cb2-16" tabindex="-1"></a>              <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">size =</span> size),</span>
+<span id="cb2-17"><a href="intro.html#cb2-17" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>comma, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.12</span>)))</span>
+<span id="cb2-18"><a href="intro.html#cb2-18" tabindex="-1"></a>  )</span>
+<span id="cb2-19"><a href="intro.html#cb2-19" tabindex="-1"></a>}</span>
+<span id="cb2-20"><a href="intro.html#cb2-20" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="intro.html#cb2-21" tabindex="-1"></a>etiq_box <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">size =</span> <span class="fl">2.8</span>) {</span>
+<span id="cb2-22"><a href="intro.html#cb2-22" tabindex="-1"></a>  q <span class="ot">&lt;-</span> <span class="cf">function</span>(p) <span class="cf">function</span>(y) <span class="fu">unname</span>(<span class="fu">quantile</span>(y, p))</span>
+<span id="cb2-23"><a href="intro.html#cb2-23" tabindex="-1"></a>  etiqueta <span class="ot">&lt;-</span> <span class="cf">function</span>(f) {</span>
+<span id="cb2-24"><a href="intro.html#cb2-24" tabindex="-1"></a>    <span class="fu">stat_summary</span>(<span class="at">fun =</span> f, <span class="at">geom =</span> <span class="st">&quot;text&quot;</span>,</span>
+<span id="cb2-25"><a href="intro.html#cb2-25" tabindex="-1"></a>                 <span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">format</span>(<span class="fu">round</span>(<span class="fu">after_stat</span>(y), <span class="dv">1</span>), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>,</span>
+<span id="cb2-26"><a href="intro.html#cb2-26" tabindex="-1"></a>                                    <span class="at">trim =</span> <span class="cn">TRUE</span>, <span class="at">drop0trailing =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb2-27"><a href="intro.html#cb2-27" tabindex="-1"></a>                 <span class="at">position =</span> <span class="fu">position_nudge</span>(<span class="at">x =</span> <span class="fl">0.4</span>), <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">size =</span> size)</span>
+<span id="cb2-28"><a href="intro.html#cb2-28" tabindex="-1"></a>  }</span>
+<span id="cb2-29"><a href="intro.html#cb2-29" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">etiqueta</span>(<span class="fu">q</span>(<span class="fl">0.25</span>)), <span class="fu">etiqueta</span>(median), <span class="fu">etiqueta</span>(<span class="fu">q</span>(<span class="fl">0.75</span>)))</span>
+<span id="cb2-30"><a href="intro.html#cb2-30" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="intro.html#cb3-1" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>())</span></code></pre></div>
+<p>Importemos el dataframe</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="intro.html#cb4-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/Student_Performance.csv&quot;</span>)</span>
+<span id="cb4-2"><a href="intro.html#cb4-2" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(df)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="intro.html#cb5-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="intro.html#cb5-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.character), <span class="sc">~</span> <span class="fu">na_if</span>(., <span class="st">&quot;&quot;</span>)))</span></code></pre></div>
+<p>Ver las primeras 5 filas</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="intro.html#cb6-1" tabindex="-1"></a><span class="fu">head</span>(df, <span class="at">n =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="intro.html#cb6-2" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Primeras 5 filas del dataset&quot;</span>, <span class="at">align =</span> <span class="st">&quot;c&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="intro.html#cb6-3" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb6-4"><a href="intro.html#cb6-4" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="intro.html#cb6-5" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="intro.html#cb6-6" tabindex="-1"></a>  <span class="fu">scroll_box</span>(<span class="at">width =</span> <span class="st">&quot;100%&quot;</span>)</span></code></pre></div>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:filas">Tabla 2.1: </span>Primeras 5 filas del dataset
+</caption>
+<thead>
+<tr>
+<th style="text-align:center;font-weight: bold;">
+Hours Studied
+</th>
+<th style="text-align:center;font-weight: bold;">
+Previous Scores
+</th>
+<th style="text-align:center;font-weight: bold;">
+Extracurricular Activities
+</th>
+<th style="text-align:center;font-weight: bold;">
+Sleep Hours
+</th>
+<th style="text-align:center;font-weight: bold;">
+Sample Question Papers Practiced
+</th>
+<th style="text-align:center;font-weight: bold;">
+Performance Index
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+7
+</td>
+<td style="text-align:center;">
+99
+</td>
+<td style="text-align:center;">
+Yes
+</td>
+<td style="text-align:center;">
+9
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+91
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+82
+</td>
+<td style="text-align:center;">
+No
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+65
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+8
+</td>
+<td style="text-align:center;">
+51
+</td>
+<td style="text-align:center;">
+Yes
+</td>
+<td style="text-align:center;">
+7
+</td>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+45
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+5
+</td>
+<td style="text-align:center;">
+52
+</td>
+<td style="text-align:center;">
+Yes
+</td>
+<td style="text-align:center;">
+5
+</td>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+36
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+7
+</td>
+<td style="text-align:center;">
+75
+</td>
+<td style="text-align:center;">
+No
+</td>
+<td style="text-align:center;">
+8
+</td>
+<td style="text-align:center;">
+5
+</td>
+<td style="text-align:center;">
+66
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Ver la estructura de los datos</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="intro.html#cb7-1" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb7-2"><a href="intro.html#cb7-2" tabindex="-1"></a>  <span class="at">Variable =</span> <span class="fu">names</span>(df),</span>
+<span id="cb7-3"><a href="intro.html#cb7-3" tabindex="-1"></a>  <span class="at">Tipo =</span> <span class="fu">sapply</span>(df, <span class="cf">function</span>(x) <span class="fu">class</span>(x)[<span class="dv">1</span>]),</span>
+<span id="cb7-4"><a href="intro.html#cb7-4" tabindex="-1"></a>  <span class="st">`</span><span class="at">Primeros valores</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sapply</span>(df, <span class="cf">function</span>(x) <span class="fu">paste</span>(<span class="fu">head</span>(<span class="fu">as.character</span>(x), <span class="dv">5</span>), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>))</span>
+<span id="cb7-5"><a href="intro.html#cb7-5" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="intro.html#cb7-6" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">&quot;Estructura del dataset: &quot;</span>, <span class="fu">format</span>(<span class="fu">nrow</span>(df), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>),</span>
+<span id="cb7-7"><a href="intro.html#cb7-7" tabindex="-1"></a>                         <span class="st">&quot; observaciones y &quot;</span>, <span class="fu">ncol</span>(df), <span class="st">&quot; variables&quot;</span>),</span>
+<span id="cb7-8"><a href="intro.html#cb7-8" tabindex="-1"></a>        <span class="at">align =</span> <span class="st">&quot;lcl&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-9"><a href="intro.html#cb7-9" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb7-10"><a href="intro.html#cb7-10" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-11"><a href="intro.html#cb7-11" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:str">Tabla 2.2: </span>Estructura del dataset: 10,000 observaciones y 6 variables
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+Variable
+</th>
+<th style="text-align:center;font-weight: bold;">
+Tipo
+</th>
+<th style="text-align:left;font-weight: bold;">
+Primeros valores
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Hours Studied
+</td>
+<td style="text-align:center;">
+integer
+</td>
+<td style="text-align:left;">
+7, 4, 8, 5, 7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Previous Scores
+</td>
+<td style="text-align:center;">
+integer
+</td>
+<td style="text-align:left;">
+99, 82, 51, 52, 75
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Extracurricular Activities
+</td>
+<td style="text-align:center;">
+character
+</td>
+<td style="text-align:left;">
+Yes, No, Yes, Yes, No
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sleep Hours
+</td>
+<td style="text-align:center;">
+integer
+</td>
+<td style="text-align:left;">
+9, 4, 7, 5, 8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sample Question Papers Practiced
+</td>
+<td style="text-align:center;">
+integer
+</td>
+<td style="text-align:left;">
+1, 2, 2, 2, 5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Performance Index
+</td>
+<td style="text-align:center;">
+numeric
+</td>
+<td style="text-align:left;">
+91, 65, 45, 36, 66
+</td>
+</tr>
+</tbody>
+</table>
+<div id="clasificación-de-las-variables" class="section level2 hasAnchor" number="2.1">
+<h2><span class="header-section-number">2.1</span> Clasificación de las variables<a href="intro.html#clasificaci%C3%B3n-de-las-variables" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Con base en la estructura anterior, las variables del dataset se clasifican según su naturaleza. Todas las variables disponibles aportan información relevante sobre los hábitos de estudio o el desempeño académico del estudiante, por lo que no se excluye ninguna columna.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="intro.html#cb8-1" tabindex="-1"></a>categoricas <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb8-2"><a href="intro.html#cb8-2" tabindex="-1"></a>  <span class="at">Variable =</span> <span class="fu">c</span>(<span class="st">&quot;Extracurricular Activities&quot;</span>),</span>
+<span id="cb8-3"><a href="intro.html#cb8-3" tabindex="-1"></a>  <span class="at">Subtipo =</span> <span class="fu">c</span>(<span class="st">&quot;Nominal (dicotómica)&quot;</span>),</span>
+<span id="cb8-4"><a href="intro.html#cb8-4" tabindex="-1"></a>  Categorías <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No, Yes&quot;</span>)</span>
+<span id="cb8-5"><a href="intro.html#cb8-5" tabindex="-1"></a>)</span>
+<span id="cb8-6"><a href="intro.html#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="intro.html#cb8-7" tabindex="-1"></a>categoricas <span class="sc">%&gt;%</span></span>
+<span id="cb8-8"><a href="intro.html#cb8-8" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Variables categóricas (1)&quot;</span>, <span class="at">align =</span> <span class="st">&quot;lcl&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-9"><a href="intro.html#cb8-9" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb8-10"><a href="intro.html#cb8-10" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-11"><a href="intro.html#cb8-11" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:clasificacion">Tabla 2.3: </span>Variables categóricas (1)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+Variable
+</th>
+<th style="text-align:center;font-weight: bold;">
+Subtipo
+</th>
+<th style="text-align:left;font-weight: bold;">
+Categorías
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Extracurricular Activities
+</td>
+<td style="text-align:center;">
+Nominal (dicotómica)
+</td>
+<td style="text-align:left;">
+No, Yes
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="intro.html#cb9-1" tabindex="-1"></a>numericas <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb9-2"><a href="intro.html#cb9-2" tabindex="-1"></a>  <span class="at">Variable =</span> <span class="fu">c</span>(<span class="st">&quot;Hours Studied&quot;</span>, <span class="st">&quot;Previous Scores&quot;</span>, <span class="st">&quot;Sleep Hours&quot;</span>,</span>
+<span id="cb9-3"><a href="intro.html#cb9-3" tabindex="-1"></a>               <span class="st">&quot;Sample Question Papers Practiced&quot;</span>, <span class="st">&quot;Performance Index&quot;</span>),</span>
+<span id="cb9-4"><a href="intro.html#cb9-4" tabindex="-1"></a>  <span class="at">Subtipo =</span> <span class="fu">c</span>(<span class="st">&quot;Discreta (entera)&quot;</span>, <span class="st">&quot;Continua / entera&quot;</span>,</span>
+<span id="cb9-5"><a href="intro.html#cb9-5" tabindex="-1"></a>              <span class="st">&quot;Discreta (entera)&quot;</span>, <span class="st">&quot;Discreta (conteo)&quot;</span>, <span class="st">&quot;Continua&quot;</span>),</span>
+<span id="cb9-6"><a href="intro.html#cb9-6" tabindex="-1"></a>  <span class="at">Rol =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;Predictora&quot;</span>, <span class="dv">4</span>), <span class="st">&quot;Respuesta&quot;</span>)</span>
+<span id="cb9-7"><a href="intro.html#cb9-7" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="intro.html#cb9-8" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="intro.html#cb9-9" tabindex="-1"></a>numericas <span class="sc">%&gt;%</span></span>
+<span id="cb9-10"><a href="intro.html#cb9-10" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Variables numéricas (5)&quot;</span>, <span class="at">align =</span> <span class="st">&quot;lcc&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-11"><a href="intro.html#cb9-11" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb9-12"><a href="intro.html#cb9-12" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-13"><a href="intro.html#cb9-13" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:clasificacion-num">Tabla 2.4: </span>Variables numéricas (5)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+Variable
+</th>
+<th style="text-align:center;font-weight: bold;">
+Subtipo
+</th>
+<th style="text-align:center;font-weight: bold;">
+Rol
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Hours Studied
+</td>
+<td style="text-align:center;">
+Discreta (entera)
+</td>
+<td style="text-align:center;">
+Predictora
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Previous Scores
+</td>
+<td style="text-align:center;">
+Continua / entera
+</td>
+<td style="text-align:center;">
+Predictora
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sleep Hours
+</td>
+<td style="text-align:center;">
+Discreta (entera)
+</td>
+<td style="text-align:center;">
+Predictora
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sample Question Papers Practiced
+</td>
+<td style="text-align:center;">
+Discreta (conteo)
+</td>
+<td style="text-align:center;">
+Predictora
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Performance Index
+</td>
+<td style="text-align:center;">
+Continua
+</td>
+<td style="text-align:center;">
+Respuesta
+</td>
+</tr>
+</tbody>
+</table>
+<p>En total, el dataset contiene 10,000 observaciones y 6 variables: 1 categórica y 5 numéricas (de las cuales Performance Index es la variable respuesta). Por lo tanto, se dispone de 5 variables predictoras: 1 categórica y 4 numéricas.</p>
+</div>
+<div id="revisión-de-datos-faltantes-en-las-variables" class="section level2 hasAnchor" number="2.2">
+<h2><span class="header-section-number">2.2</span> Revisión de datos faltantes en las variables<a href="intro.html#revisi%C3%B3n-de-datos-faltantes-en-las-variables" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Veamos si existen valores faltantes en las variables del conjunto de datos.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="intro.html#cb10-1" tabindex="-1"></a>df <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="intro.html#cb10-2" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.)))) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="intro.html#cb10-3" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">&quot;Variable&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;Datos faltantes&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="intro.html#cb10-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Porcentaje (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="st">`</span><span class="at">Datos faltantes</span><span class="st">`</span> <span class="sc">/</span> <span class="fu">nrow</span>(df) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">2</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="intro.html#cb10-5" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Datos faltantes por variable&quot;</span>,</span>
+<span id="cb10-6"><a href="intro.html#cb10-6" tabindex="-1"></a>        <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>), <span class="at">align =</span> <span class="st">&quot;lcc&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-7"><a href="intro.html#cb10-7" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb10-8"><a href="intro.html#cb10-8" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-9"><a href="intro.html#cb10-9" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+(#tab:faltantes1.11)Datos faltantes por variable
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+Variable
+</th>
+<th style="text-align:center;font-weight: bold;">
+Datos faltantes
+</th>
+<th style="text-align:center;font-weight: bold;">
+Porcentaje (%)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Hours Studied
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Previous Scores
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Extracurricular Activities
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sleep Hours
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sample Question Papers Practiced
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Performance Index
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+</tbody>
+</table>
+<p>El análisis de valores faltantes muestra que todas las variables —tanto las 5 numéricas (Hours Studied, Previous Scores, Sleep Hours, Sample Question Papers Practiced y Performance Index) como la categórica (Extracurricular Activities)— están completamente diligenciadas (0 datos faltantes, 0 %).</p>
+<p>Verificamos de forma desagregada las variables numéricas y categóricas para dejar constancia de su integridad antes de transformar tipos de datos.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="intro.html#cb11-1" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="intro.html#cb11-2" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(is.numeric)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="intro.html#cb11-3" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.)), <span class="at">.names =</span> <span class="st">&quot;NA_{.col}&quot;</span>))</span></code></pre></div>
+<pre><code>##   NA_Hours Studied NA_Previous Scores NA_Sleep Hours
+## 1                0                  0              0
+##   NA_Sample Question Papers Practiced NA_Performance Index
+## 1                                   0                    0</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="intro.html#cb13-1" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="intro.html#cb13-2" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(is.character)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="intro.html#cb13-3" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.)), <span class="at">.names =</span> <span class="st">&quot;NA_{.col}&quot;</span>))</span></code></pre></div>
+<pre><code>##   NA_Extracurricular Activities
+## 1                             0</code></pre>
+<p>Al no registrarse ningún valor faltante en el dataset, no es necesario aplicar técnicas de imputación en esta etapa, conservando intactos los 10,000 registros originales.</p>
+</div>
+<div id="conversión-de-variables-de-tipo-carácter-a-factor" class="section level2 hasAnchor" number="2.3">
+<h2><span class="header-section-number">2.3</span> Conversión de variables de tipo carácter a factor<a href="intro.html#conversi%C3%B3n-de-variables-de-tipo-car%C3%A1cter-a-factor" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>El paso siguiente es convertir la variable de tipo carácter (character) a factor (factor), que es el tipo de dato que R utiliza para representar variables categóricas, facilitando las tablas de frecuencia, los gráficos y las pruebas estadísticas.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="intro.html#cb15-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb15-2"><a href="intro.html#cb15-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-3"><a href="intro.html#cb15-3" tabindex="-1"></a>    <span class="st">`</span><span class="at">Extracurricular Activities</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">factor</span>(<span class="st">`</span><span class="at">Extracurricular Activities</span><span class="st">`</span>,</span>
+<span id="cb15-4"><a href="intro.html#cb15-4" tabindex="-1"></a>                                          <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>, <span class="st">&quot;Yes&quot;</span>))</span>
+<span id="cb15-5"><a href="intro.html#cb15-5" tabindex="-1"></a>  )</span></code></pre></div>
+<p>Se convirtió a factor la variable Extracurricular Activities con los niveles “No” y “Yes”. Todos los gráficos, tablas, estimaciones y pruebas de hipótesis se calculan con los 10,000 registros del conjunto de datos, sin submuestreo.</p>
+</div>
+<div id="análisis-de-la-variable-respuesta-performance-index" class="section level2 hasAnchor" number="2.4">
+<h2><span class="header-section-number">2.4</span> Análisis de la variable respuesta (Performance Index)<a href="intro.html#an%C3%A1lisis-de-la-variable-respuesta-performance-index" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Antes de analizar las variables independientes, se caracteriza por completo la variable respuesta del estudio, Performance Index, ya que es la variable con la que se compararán todas las demás.</p>
+<div id="resumen-estadístico" class="section level3 hasAnchor" number="2.4.1">
+<h3><span class="header-section-number">2.4.1</span> Resumen estadístico<a href="intro.html#resumen-estad%C3%ADstico" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="intro.html#cb16-1" tabindex="-1"></a>df <span class="sc">%&gt;%</span></span>
+<span id="cb16-2"><a href="intro.html#cb16-2" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb16-3"><a href="intro.html#cb16-3" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb16-4"><a href="intro.html#cb16-4" tabindex="-1"></a>    <span class="at">media =</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-5"><a href="intro.html#cb16-5" tabindex="-1"></a>    <span class="at">sd =</span> <span class="fu">sd</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-6"><a href="intro.html#cb16-6" tabindex="-1"></a>    <span class="at">mediana =</span> <span class="fu">median</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-7"><a href="intro.html#cb16-7" tabindex="-1"></a>    <span class="at">RIC =</span> <span class="fu">IQR</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-8"><a href="intro.html#cb16-8" tabindex="-1"></a>    <span class="at">Q1 =</span> <span class="fu">quantile</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>, <span class="fl">0.25</span>),</span>
+<span id="cb16-9"><a href="intro.html#cb16-9" tabindex="-1"></a>    <span class="at">Q3 =</span> <span class="fu">quantile</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>, <span class="fl">0.75</span>),</span>
+<span id="cb16-10"><a href="intro.html#cb16-10" tabindex="-1"></a>    mínimo <span class="ot">=</span> <span class="fu">min</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-11"><a href="intro.html#cb16-11" tabindex="-1"></a>    máximo <span class="ot">=</span> <span class="fu">max</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-12"><a href="intro.html#cb16-12" tabindex="-1"></a>    asimetría <span class="ot">=</span> <span class="fu">skewness</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>),</span>
+<span id="cb16-13"><a href="intro.html#cb16-13" tabindex="-1"></a>    <span class="at">curtosis =</span> <span class="fu">kurtosis</span>(<span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)</span>
+<span id="cb16-14"><a href="intro.html#cb16-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-15"><a href="intro.html#cb16-15" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">&quot;Estadístico&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;Valor&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-16"><a href="intro.html#cb16-16" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Resumen estadístico de Performance Index&quot;</span>, <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb16-17"><a href="intro.html#cb16-17" tabindex="-1"></a>        <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>), <span class="at">align =</span> <span class="st">&quot;lc&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-18"><a href="intro.html#cb16-18" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb16-19"><a href="intro.html#cb16-19" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-20"><a href="intro.html#cb16-20" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:resumen-respuesta">Tabla 2.5: </span>Resumen estadístico de Performance Index
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+Estadístico
+</th>
+<th style="text-align:center;font-weight: bold;">
+Valor
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+n
+</td>
+<td style="text-align:center;">
+10,000.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+media
+</td>
+<td style="text-align:center;">
+55.22
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sd
+</td>
+<td style="text-align:center;">
+19.21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+mediana
+</td>
+<td style="text-align:center;">
+55.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RIC
+</td>
+<td style="text-align:center;">
+31.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Q1
+</td>
+<td style="text-align:center;">
+40.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Q3
+</td>
+<td style="text-align:center;">
+71.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+mínimo
+</td>
+<td style="text-align:center;">
+10.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+máximo
+</td>
+<td style="text-align:center;">
+100.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+asimetría
+</td>
+<td style="text-align:center;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+curtosis
+</td>
+<td style="text-align:center;">
+2.14
+</td>
+</tr>
+</tbody>
+</table>
+<p>El resumen muestra que Performance Index tiene una media de 55.22 y una mediana prácticamente idéntica de 55.00, con una asimetría cercana a cero (-0.00), lo que indica una distribución altamente simétrica alrededor del centro. Su desviación estándar es de 19.21 puntos y el rango intercuartílico es de 31.00 puntos (entre Q1 = 40.00 y Q3 = 71.00), abarcando valores desde un mínimo de 10.00 hasta un máximo de 100.00. La curtosis de 2.14 (menor que 3) sugiere una distribución platicúrtica, es decir, más aplanada en el centro y con colas más ligeras que una distribución normal.</p>
+</div>
+<div id="distribución" class="section level3 hasAnchor" number="2.4.2">
+<h3><span class="header-section-number">2.4.2</span> Distribución<a href="intro.html#distribuci%C3%B3n" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="intro.html#cb17-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb17-2"><a href="intro.html#cb17-2" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>, <span class="at">color =</span> <span class="st">&quot;white&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_hist</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb17-3"><a href="intro.html#cb17-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Performance Index&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Performance Index&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/histograma-respuesta-1.png" alt="" width="672" /></p>
+<p>El histograma muestra que Performance Index presenta una distribución simétrica y acampanada, pero notablemente amplia y aplanada en su zona central (entre 35 y 75 puntos), donde la mayoría de los intervalos reúne entre 400 y 650 estudiantes. Hacia ambos extremos (por debajo de 25 y por encima de 85 puntos) la frecuencia desciende de manera simétrica y gradual hasta los límites de 10 y 100 puntos, sin colas largas ni sesgos pronunciados.</p>
+</div>
+<div id="valores-atípicos" class="section level3 hasAnchor" number="2.4.3">
+<h3><span class="header-section-number">2.4.3</span> Valores atípicos<a href="intro.html#valores-at%C3%ADpicos" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="intro.html#cb18-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">&quot;&quot;</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb18-2"><a href="intro.html#cb18-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb18-3"><a href="intro.html#cb18-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Boxplot de Performance Index&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/boxplot-respuesta-1.png" alt="" width="672" /></p>
+<p>El boxplot de Performance Index confirma la simetría observada en el histograma y la ausencia total de valores atípicos. La caja, que contiene el 50 % central de los estudiantes, se extiende exactamente entre 40 y 71 puntos, con la mediana ubicada en 55. Los bigotes cubren todo el rango observado, desde 10 hasta 100 puntos, sin ningún punto fuera de ellos.</p>
+</div>
+<div id="conclusión-sobre-la-variable-respuesta" class="section level3 hasAnchor" number="2.4.4">
+<h3><span class="header-section-number">2.4.4</span> Conclusión sobre la variable respuesta<a href="intro.html#conclusi%C3%B3n-sobre-la-variable-respuesta" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>En conclusión, Performance Index es una variable continua, simétrica (media de 55.22 y mediana de 55.00), acotada entre 10 y 100 puntos, sin valores atípicos y con forma platicúrtica (curtosis de 2.14). Aunque su simetría es notable, su achatamiento central y el tamaño muestral de 10,000 registros hacen que se desvíe de una distribución normal teórica, lo que se verificará formalmente en el capítulo de inferencia estadística.</p>
+</div>
+</div>
+<div id="resumen-de-las-demás-variables-numéricas" class="section level2 hasAnchor" number="2.5">
+<h2><span class="header-section-number">2.5</span> Resumen de las demás variables numéricas<a href="intro.html#resumen-de-las-dem%C3%A1s-variables-num%C3%A9ricas" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Ahora se resumen las variables numéricas restantes, que constituyen las cuatro predictoras numéricas del estudio.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="intro.html#cb19-1" tabindex="-1"></a>df <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="intro.html#cb19-2" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">where</span>(is.numeric), <span class="sc">-</span><span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="intro.html#cb19-3" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;valor&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="intro.html#cb19-4" tabindex="-1"></a>  <span class="fu">group_by</span>(variable) <span class="sc">%&gt;%</span></span>
+<span id="cb19-5"><a href="intro.html#cb19-5" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb19-6"><a href="intro.html#cb19-6" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">length</span>(valor),</span>
+<span id="cb19-7"><a href="intro.html#cb19-7" tabindex="-1"></a>    <span class="at">media =</span> <span class="fu">mean</span>(valor),</span>
+<span id="cb19-8"><a href="intro.html#cb19-8" tabindex="-1"></a>    <span class="at">sd =</span> <span class="fu">sd</span>(valor),</span>
+<span id="cb19-9"><a href="intro.html#cb19-9" tabindex="-1"></a>    <span class="at">mediana =</span> <span class="fu">median</span>(valor),</span>
+<span id="cb19-10"><a href="intro.html#cb19-10" tabindex="-1"></a>    <span class="at">RIC =</span> <span class="fu">IQR</span>(valor),</span>
+<span id="cb19-11"><a href="intro.html#cb19-11" tabindex="-1"></a>    <span class="at">Q1 =</span> <span class="fu">quantile</span>(valor, <span class="fl">0.25</span>),</span>
+<span id="cb19-12"><a href="intro.html#cb19-12" tabindex="-1"></a>    <span class="at">Q3 =</span> <span class="fu">quantile</span>(valor, <span class="fl">0.75</span>),</span>
+<span id="cb19-13"><a href="intro.html#cb19-13" tabindex="-1"></a>    mínimo <span class="ot">=</span> <span class="fu">min</span>(valor),</span>
+<span id="cb19-14"><a href="intro.html#cb19-14" tabindex="-1"></a>    máximo <span class="ot">=</span> <span class="fu">max</span>(valor),</span>
+<span id="cb19-15"><a href="intro.html#cb19-15" tabindex="-1"></a>    asimetría <span class="ot">=</span> <span class="fu">skewness</span>(valor),</span>
+<span id="cb19-16"><a href="intro.html#cb19-16" tabindex="-1"></a>    <span class="at">curtosis =</span> <span class="fu">kurtosis</span>(valor)</span>
+<span id="cb19-17"><a href="intro.html#cb19-17" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb19-18"><a href="intro.html#cb19-18" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Resumen estadístico de las variables numéricas predictoras&quot;</span>,</span>
+<span id="cb19-19"><a href="intro.html#cb19-19" tabindex="-1"></a>        <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-20"><a href="intro.html#cb19-20" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>, <span class="st">&quot;condensed&quot;</span>),</span>
+<span id="cb19-21"><a href="intro.html#cb19-21" tabindex="-1"></a>                <span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>, <span class="at">font_size =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-22"><a href="intro.html#cb19-22" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<table class="table table-striped table-hover table-condensed" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+<span id="tab:resumen-numericas">Tabla 2.6: </span>Resumen estadístico de las variables numéricas predictoras
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+variable
+</th>
+<th style="text-align:right;font-weight: bold;">
+n
+</th>
+<th style="text-align:right;font-weight: bold;">
+media
+</th>
+<th style="text-align:right;font-weight: bold;">
+sd
+</th>
+<th style="text-align:right;font-weight: bold;">
+mediana
+</th>
+<th style="text-align:right;font-weight: bold;">
+RIC
+</th>
+<th style="text-align:right;font-weight: bold;">
+Q1
+</th>
+<th style="text-align:right;font-weight: bold;">
+Q3
+</th>
+<th style="text-align:right;font-weight: bold;">
+mínimo
+</th>
+<th style="text-align:right;font-weight: bold;">
+máximo
+</th>
+<th style="text-align:right;font-weight: bold;">
+asimetría
+</th>
+<th style="text-align:right;font-weight: bold;">
+curtosis
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Hours Studied
+</td>
+<td style="text-align:right;">
+10,000
+</td>
+<td style="text-align:right;">
+4.99
+</td>
+<td style="text-align:right;">
+2.59
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.77
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Previous Scores
+</td>
+<td style="text-align:right;">
+10,000
+</td>
+<td style="text-align:right;">
+69.45
+</td>
+<td style="text-align:right;">
+17.34
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+85
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sample Question Papers Practiced
+</td>
+<td style="text-align:right;">
+10,000
+</td>
+<td style="text-align:right;">
+4.58
+</td>
+<td style="text-align:right;">
+2.87
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+1.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sleep Hours
+</td>
+<td style="text-align:right;">
+10,000
+</td>
+<td style="text-align:right;">
+6.53
+</td>
+<td style="text-align:right;">
+1.70
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+1.74
+</td>
+</tr>
+</tbody>
+</table>
+<p>La tabla presenta las medidas descriptivas de las cuatro predictoras numéricas. Todas muestran una simetría muy cercana a cero y una curtosis próxima a 1.75–1.79, valor característico de distribuciones uniformes discretas:</p>
+<p>Hours Studied tiene una media de 4.99 horas y una mediana de 5.00, con valores enteros entre 1 y 9 horas.</p>
+<p>Previous Scores registra una media de 69.45 puntos y una mediana de 69.00, con desviación estándar de 17.34 y rango de 40 a 99 puntos.</p>
+<p>Sleep Hours presenta una media de 6.53 horas y una mediana de 7.00, abarcando de 4 a 9 horas diarias.</p>
+<p>Sample Question Papers Practiced tiene una media de 4.58 cuestionarios y una mediana de 5.00, variando entre 0 y 9 cuestionarios practicados.</p>
+</div>
+<div id="análisis-de-las-variables-independientes-características" class="section level2 hasAnchor" number="2.6">
+<h2><span class="header-section-number">2.6</span> Análisis de las variables independientes (características)<a href="intro.html#an%C3%A1lisis-de-las-variables-independientes-caracter%C3%ADsticas" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Ahora analizaremos cada variable predictora de forma individual, comenzando por las cuatro variables numéricas y continuando con la variable categórica.</p>
+<p>Variable Hours Studied:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="intro.html#cb20-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb20-2"><a href="intro.html#cb20-2" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="fl">0.5</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>, <span class="at">color =</span> <span class="st">&quot;white&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-3"><a href="intro.html#cb20-3" tabindex="-1"></a>  <span class="fu">etiq_hist</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb20-4"><a href="intro.html#cb20-4" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb20-5"><a href="intro.html#cb20-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Hours Studied&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-5-1.png" alt="" width="672" /></p>
+<p>La distribución de Hours Studied es prácticamente uniforme discreta entre 1 y 9 horas: cada valor entero reúne entre 1,085 y 1,152 estudiantes (alrededor del 11 % de la muestra por cada nivel), sin picos ni sesgos hacia ningún extremo.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="intro.html#cb21-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">&quot;&quot;</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb21-2"><a href="intro.html#cb21-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb21-3"><a href="intro.html#cb21-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Boxplot de Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Hours Studied&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-6-1.png" alt="" width="672" /></p>
+<p>El boxplot confirma la ausencia de valores atípicos: los bigotes abarcan de 1 a 9 horas, la caja central va de 3 a 7 horas y la mediana se ubica exactamente en 5 horas, reflejando una distribución perfectamente equilibrada.</p>
+<p>Variable Previous Scores:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="intro.html#cb22-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="intro.html#cb22-2" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>, <span class="at">color =</span> <span class="st">&quot;white&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_hist</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb22-3"><a href="intro.html#cb22-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Previous Scores&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Previous Scores&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-7-1.png" alt="" width="672" /></p>
+<p>La distribución de Previous Scores se muestra uniforme a lo largo de todo su rango entre 40 y 99 puntos. Cada barra reúne entre 290 y 370 registros aproximadamente, lo que indica que las calificaciones previas de los estudiantes se reparten de manera homogénea sin concentrarse en un tramo específico.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="intro.html#cb23-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">&quot;&quot;</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb23-2"><a href="intro.html#cb23-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb23-3"><a href="intro.html#cb23-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Boxplot de Previous Scores&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Previous Scores&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-8-1.png" alt="" width="672" /></p>
+<p>El boxplot de Previous Scores no presenta valores atípicos: los bigotes cubren de 40 a 99 puntos, la caja central abarca de 54 a 85 puntos y la mediana se sitúa en 69 puntos, corroborando la simetría de la variable.</p>
+<p>Variable Sleep Hours:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="intro.html#cb24-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb24-2"><a href="intro.html#cb24-2" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="fl">3.5</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>, <span class="at">color =</span> <span class="st">&quot;white&quot;</span>) <span class="sc">+</span></span>
+<span id="cb24-3"><a href="intro.html#cb24-3" tabindex="-1"></a>  <span class="fu">etiq_hist</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb24-4"><a href="intro.html#cb24-4" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="intro.html#cb24-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Sleep Hours&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Sleep Hours&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-9-1.png" alt="" width="672" /></p>
+<p>Las seis categorías enteras de Sleep Hours (de 4 a 9 horas) muestran frecuencias muy parejas, entre 1,606 y 1,804 estudiantes cada una. El valor de 8 horas presenta una frecuencia ligeramente superior (1,804 registros), pero en general los hábitos de descanso se reparten de manera uniforme.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="intro.html#cb25-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">&quot;&quot;</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb25-2"><a href="intro.html#cb25-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb25-3"><a href="intro.html#cb25-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Boxplot de Sleep Hours&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sleep Hours&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-10-1.png" alt="" width="672" /></p>
+<p>El boxplot de Sleep Hours no muestra valores atípicos: los bigotes van de 4 a 9 horas, el 50 % central de los estudiantes duerme entre 5 y 8 horas, y la mediana se ubica en 7 horas.</p>
+<p>Variable Sample Question Papers Practiced:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="intro.html#cb26-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb26-2"><a href="intro.html#cb26-2" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>, <span class="at">color =</span> <span class="st">&quot;white&quot;</span>) <span class="sc">+</span></span>
+<span id="cb26-3"><a href="intro.html#cb26-3" tabindex="-1"></a>  <span class="fu">etiq_hist</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">boundary =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-4"><a href="intro.html#cb26-4" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb26-5"><a href="intro.html#cb26-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Sample Question Papers Practiced&quot;</span>,</span>
+<span id="cb26-6"><a href="intro.html#cb26-6" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-11-1.png" alt="" width="672" /></p>
+<p>La distribución de Sample Question Papers Practiced es uniforme discreta entre 0 y 9 cuestionarios practicados, con frecuencias entre 930 y 1,059 estudiantes en cada nivel. No existe concentración en cero ni sesgo hacia valores altos.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="intro.html#cb27-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">&quot;&quot;</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb27-2"><a href="intro.html#cb27-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb27-3"><a href="intro.html#cb27-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Boxplot de Sample Question Papers Practiced&quot;</span>,</span>
+<span id="cb27-4"><a href="intro.html#cb27-4" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-12-1.png" alt="" width="672" /></p>
+<p>El boxplot confirma que no hay valores atípicos: los bigotes cubren todo el rango de 0 a 9 cuestionarios, la caja va de 2 a 7 y la mediana se ubica en 5 cuestionarios practicados.</p>
+<p>Continuaremos con la variable categórica del dataset.</p>
+<p>Variable Extracurricular Activities:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="intro.html#cb28-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Extracurricular Activities</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb28-2"><a href="intro.html#cb28-2" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_barras</span>() <span class="sc">+</span></span>
+<span id="cb28-3"><a href="intro.html#cb28-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Distribución de Extracurricular Activities&quot;</span>,</span>
+<span id="cb28-4"><a href="intro.html#cb28-4" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Extracurricular Activities&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Frecuencia&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-13-1.png" alt="" width="672" /></p>
+<p>La proporción de estudiantes que participan y que no participan en actividades extracurriculares está prácticamente equilibrada: 5,052 estudiantes (50.52 %) responden “No” y 4,948 estudiantes (49.48 %) responden “Yes”. No existe desbalance entre categorías.</p>
+<p>Una vez caracterizadas las variables de forma individual, se analiza cómo se relacionan con la variable respuesta, Performance Index, con el fin de identificar patrones visuales que luego serán contrastados formalmente.</p>
+<p>Hours Studied vs Performance Index:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="intro.html#cb29-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb29-2"><a href="intro.html#cb29-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb29-3"><a href="intro.html#cb29-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb29-4"><a href="intro.html#cb29-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Hours Studied vs Performance Index&quot;</span>,</span>
+<span id="cb29-5"><a href="intro.html#cb29-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-14-1.png" alt="" width="672" /></p>
+<p>Se observa una tendencia ascendente clara: a medida que aumentan las horas de estudio de 1 a 9, toda la franja de valores de Performance Index se desplaza hacia arriba. Mientras que con 1 hora de estudio los índices se concentran aproximadamente entre 10 y 75 puntos, con 9 horas de estudio se ubican entre 35 y 100 puntos, evidenciando una relación positiva moderada.</p>
+<p>Previous Scores vs Performance Index:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="intro.html#cb30-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb30-2"><a href="intro.html#cb30-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb30-3"><a href="intro.html#cb30-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Previous Scores vs Performance Index&quot;</span>,</span>
+<span id="cb30-4"><a href="intro.html#cb30-4" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Previous Scores&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-15-1.png" alt="" width="672" /></p>
+<p>Se aprecia una relación lineal positiva muy marcada y estrecha entre Previous Scores y Performance Index. Los puntos forman una banda diagonal ascendente bien definida: los estudiantes con calificaciones previas cercanas a 40 obtienen índices alrededor de 10–40 puntos, mientras que quienes tienen calificaciones previas cercanas a 99 alcanzan índices entre 70 y 100 puntos. Esta variable se perfila visualmente como el predictor individual más fuerte del rendimiento académico.</p>
+<p>Sleep Hours vs Performance Index:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="intro.html#cb31-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb31-2"><a href="intro.html#cb31-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="intro.html#cb31-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb31-4"><a href="intro.html#cb31-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Sleep Hours vs Performance Index&quot;</span>,</span>
+<span id="cb31-5"><a href="intro.html#cb31-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Sleep Hours&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-16-1.png" alt="" width="672" /></p>
+<p>Para cada cantidad de horas de sueño (de 4 a 9), los valores de Performance Index cubren prácticamente el mismo rango (de 10 a 100 puntos) con una distribución vertical muy similar, sin que se distinga a simple vista una pendiente pronunciada.</p>
+<p>Sample Question Papers Practiced vs Performance Index:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="intro.html#cb32-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb32-2"><a href="intro.html#cb32-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb32-3"><a href="intro.html#cb32-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb32-4"><a href="intro.html#cb32-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Sample Question Papers Practiced vs Performance Index&quot;</span>,</span>
+<span id="cb32-5"><a href="intro.html#cb32-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-17-1.png" alt="" width="672" /></p>
+<p>De manera similar a Sleep Hours, las diez columnas correspondientes a 0 hasta 9 cuestionarios practicados presentan rangos y densidades verticales muy parecidos en Performance Index, lo que sugiere que, analizada de forma aislada, esta variable muestra una asociación visualmente débil con el rendimiento.</p>
+<p>Extracurricular Activities vs Performance Index:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="intro.html#cb33-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Extracurricular Activities</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb33-2"><a href="intro.html#cb33-2" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>) <span class="sc">+</span> <span class="fu">etiq_box</span>() <span class="sc">+</span></span>
+<span id="cb33-3"><a href="intro.html#cb33-3" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Performance Index según Extracurricular Activities&quot;</span>,</span>
+<span id="cb33-4"><a href="intro.html#cb33-4" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Extracurricular Activities&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Performance Index&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-18-1.png" alt="" width="672" /></p>
+<p>Los boxplots de ambos grupos lucen prácticamente idénticos: la mediana se sitúa en 55 puntos tanto para “No” como para “Yes”, mientras que los cuartiles apenas varían en 1 punto (de 40 a 70 en “No”, frente a 41 a 71 en “Yes”). Visualmente, la participación en actividades extracurriculares no produce una separación marcada en el rendimiento cuando se observa sin controlar por las demás variables.</p>
+<p>Apéndice gráfico de asociaciones entre predictores</p>
+<p>Se presenta la matriz de correlación y dispersión de las variables numéricas, calculada con los 10,000 registros. Como las variables no siguen una distribución normal, la correlación mostrada es la de Spearman.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="intro.html#cb34-1" tabindex="-1"></a>df_num <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
+<span id="cb34-2"><a href="intro.html#cb34-2" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="intro.html#cb34-3" tabindex="-1"></a>dispersion_densidad <span class="ot">&lt;-</span> <span class="cf">function</span>(data, mapping, ...) {</span>
+<span id="cb34-4"><a href="intro.html#cb34-4" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">data =</span> data, <span class="at">mapping =</span> mapping) <span class="sc">+</span></span>
+<span id="cb34-5"><a href="intro.html#cb34-5" tabindex="-1"></a>    <span class="fu">geom_bin2d</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb34-6"><a href="intro.html#cb34-6" tabindex="-1"></a>    <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">&quot;#D6E4EA&quot;</span>, <span class="at">high =</span> <span class="st">&quot;#2C4A5E&quot;</span>, <span class="at">guide =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb34-7"><a href="intro.html#cb34-7" tabindex="-1"></a>}</span>
+<span id="cb34-8"><a href="intro.html#cb34-8" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="intro.html#cb34-9" tabindex="-1"></a>grafico_spearman <span class="ot">&lt;-</span> GGally<span class="sc">::</span><span class="fu">ggpairs</span>(</span>
+<span id="cb34-10"><a href="intro.html#cb34-10" tabindex="-1"></a>  df_num,</span>
+<span id="cb34-11"><a href="intro.html#cb34-11" tabindex="-1"></a>  <span class="at">upper =</span> <span class="fu">list</span>(<span class="at">continuous =</span> GGally<span class="sc">::</span><span class="fu">wrap</span>(<span class="st">&quot;cor&quot;</span>, <span class="at">method =</span> <span class="st">&quot;spearman&quot;</span>,</span>
+<span id="cb34-12"><a href="intro.html#cb34-12" tabindex="-1"></a>                                         <span class="at">title =</span> <span class="st">&quot;Spearman&quot;</span>, <span class="at">stars =</span> <span class="cn">FALSE</span>, <span class="at">size =</span> <span class="fl">3.5</span>)),</span>
+<span id="cb34-13"><a href="intro.html#cb34-13" tabindex="-1"></a>  <span class="at">lower =</span> <span class="fu">list</span>(<span class="at">continuous =</span> dispersion_densidad),</span>
+<span id="cb34-14"><a href="intro.html#cb34-14" tabindex="-1"></a>  <span class="at">diag  =</span> <span class="fu">list</span>(<span class="at">continuous =</span> GGally<span class="sc">::</span><span class="fu">wrap</span>(<span class="st">&quot;densityDiag&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;#AEC6CF&quot;</span>)),</span>
+<span id="cb34-15"><a href="intro.html#cb34-15" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">FALSE</span></span>
+<span id="cb34-16"><a href="intro.html#cb34-16" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb34-17"><a href="intro.html#cb34-17" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">7</span>), <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>))</span>
+<span id="cb34-18"><a href="intro.html#cb34-18" tabindex="-1"></a></span>
+<span id="cb34-19"><a href="intro.html#cb34-19" tabindex="-1"></a><span class="fu">suppressWarnings</span>(<span class="fu">suppressMessages</span>(<span class="fu">print</span>(grafico_spearman)))</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-19-1.png" alt="" width="672" /></p>
+<p>La matriz de correlación resume con claridad la estructura del dataset: por un lado, Performance Index presenta una correlación muy fuerte con Previous Scores (<span class="math inline">\(\rho_s = 0.921\)</span>) y moderada con Hours Studied (<span class="math inline">\(\rho_s = 0.352\)</span>), además de correlaciones muy bajas pero positivas con Sleep Hours (<span class="math inline">\(\rho_s = 0.045\)</span>) y Sample Question Papers Practiced (<span class="math inline">\(\rho_s = 0.041\)</span>). Por otro lado, entre las cuatro variables predictoras numéricas todos los coeficientes de correlación son prácticamente cero (<span class="math inline">\(|\rho_s| \le 0.017\)</span>), lo que anticipa independencia entre regresores y ausencia de multicolinealidad.</p>
+<p>A continuación se inspeccionan individualmente los 6 pares posibles entre las variables predictoras numéricas.</p>
+<p>Hours Studied vs Previous Scores:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="intro.html#cb35-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb35-2"><a href="intro.html#cb35-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb35-3"><a href="intro.html#cb35-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb35-4"><a href="intro.html#cb35-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Hours Studied vs Previous Scores&quot;</span>,</span>
+<span id="cb35-5"><a href="intro.html#cb35-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Previous Scores&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-20-1.png" alt="" width="672" /></p>
+<p>Las nueve franjas verticales correspondientes a cada hora de estudio muestran una distribución uniforme de Previous Scores entre 40 y 99 puntos, sin tendencia ascendente ni descendente (<span class="math inline">\(\rho_s = -0.0125\)</span>).</p>
+<p>Hours Studied vs Sleep Hours:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="intro.html#cb36-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb36-2"><a href="intro.html#cb36-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb36-3"><a href="intro.html#cb36-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb36-4"><a href="intro.html#cb36-4" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb36-5"><a href="intro.html#cb36-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Hours Studied vs Sleep Hours&quot;</span>,</span>
+<span id="cb36-6"><a href="intro.html#cb36-6" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sleep Hours&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-21-1.png" alt="" width="672" /></p>
+<p>Se observa una cuadrícula uniforme de <span class="math inline">\(9 \times 6\)</span> combinaciones enteras, lo que indica que las horas de estudio y las horas de sueño son independientes entre sí (<span class="math inline">\(\rho_s = 0.0012\)</span>).</p>
+<p>Hours Studied vs Sample Question Papers Practiced:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="intro.html#cb37-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb37-2"><a href="intro.html#cb37-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb37-3"><a href="intro.html#cb37-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb37-4"><a href="intro.html#cb37-4" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb37-5"><a href="intro.html#cb37-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Hours Studied vs Sample Question Papers Practiced&quot;</span>,</span>
+<span id="cb37-6"><a href="intro.html#cb37-6" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Hours Studied&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-22-1.png" alt="" width="672" /></p>
+<p>Nuevamente se forma una cuadrícula uniforme de <span class="math inline">\(9 \times 10\)</span> puntos sin concentración en ninguna diagonal (<span class="math inline">\(\rho_s = 0.0173\)</span>), confirmando ausencia de asociación entre ambas variables.</p>
+<p>Previous Scores vs Sleep Hours:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="intro.html#cb38-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb38-2"><a href="intro.html#cb38-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb38-3"><a href="intro.html#cb38-3" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb38-4"><a href="intro.html#cb38-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Previous Scores vs Sleep Hours&quot;</span>,</span>
+<span id="cb38-5"><a href="intro.html#cb38-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Previous Scores&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sleep Hours&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-23-1.png" alt="" width="672" /></p>
+<p>Se distinguen seis líneas horizontales bien definidas (de 4 a 9 horas de sueño) a lo largo de todo el rango de Previous Scores (40 a 99), sin ningún patrón de dependencia (<span class="math inline">\(\rho_s = 0.0060\)</span>).</p>
+<p>Previous Scores vs Sample Question Papers Practiced:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="intro.html#cb39-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb39-2"><a href="intro.html#cb39-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb39-3"><a href="intro.html#cb39-3" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb39-4"><a href="intro.html#cb39-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Previous Scores vs Sample Question Papers Practiced&quot;</span>,</span>
+<span id="cb39-5"><a href="intro.html#cb39-5" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Previous Scores&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-24-1.png" alt="" width="672" /></p>
+<p>Las diez líneas horizontales correspondientes a 0 hasta 9 cuestionarios practicados se extienden de forma homogénea a lo largo de todo el rango de calificaciones previas (<span class="math inline">\(\rho_s = 0.0079\)</span>).</p>
+<p>Sleep Hours vs Sample Question Papers Practiced:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="intro.html#cb40-1" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>, <span class="at">y =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb40-2"><a href="intro.html#cb40-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#5B7C99&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.25</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb40-3"><a href="intro.html#cb40-3" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb40-4"><a href="intro.html#cb40-4" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb40-5"><a href="intro.html#cb40-5" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Sleep Hours vs Sample Question Papers Practiced&quot;</span>,</span>
+<span id="cb40-6"><a href="intro.html#cb40-6" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Sleep Hours&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sample Question Papers Practiced&quot;</span>)</span></code></pre></div>
+<p><img src="analisis-final_files/figure-html/unnamed-chunk-25-1.png" alt="" width="672" /></p>
+<p>Se observa una cuadrícula discreta uniforme de <span class="math inline">\(6 \times 10\)</span> combinaciones sin ningún patrón de asociación (<span class="math inline">\(\rho_s = 0.0041\)</span>).</p>
+<p>En conjunto, el análisis bivariado entre regresores confirma que las cuatro variables numéricas predictoras son prácticamente independientes entre sí, descartando redundancias entre ellas.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="intro.html#cb41-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">rename</span>(</span>
+<span id="cb41-2"><a href="intro.html#cb41-2" tabindex="-1"></a>  df,</span>
+<span id="cb41-3"><a href="intro.html#cb41-3" tabindex="-1"></a>  <span class="at">Hours_Studied =</span> <span class="st">`</span><span class="at">Hours Studied</span><span class="st">`</span>,</span>
+<span id="cb41-4"><a href="intro.html#cb41-4" tabindex="-1"></a>  <span class="at">Previous_Scores =</span> <span class="st">`</span><span class="at">Previous Scores</span><span class="st">`</span>,</span>
+<span id="cb41-5"><a href="intro.html#cb41-5" tabindex="-1"></a>  <span class="at">Extracurricular_Activities =</span> <span class="st">`</span><span class="at">Extracurricular Activities</span><span class="st">`</span>,</span>
+<span id="cb41-6"><a href="intro.html#cb41-6" tabindex="-1"></a>  <span class="at">Sleep_Hours =</span> <span class="st">`</span><span class="at">Sleep Hours</span><span class="st">`</span>,</span>
+<span id="cb41-7"><a href="intro.html#cb41-7" tabindex="-1"></a>  <span class="at">Sample_Question_Papers_Practiced =</span> <span class="st">`</span><span class="at">Sample Question Papers Practiced</span><span class="st">`</span>,</span>
+<span id="cb41-8"><a href="intro.html#cb41-8" tabindex="-1"></a>  <span class="at">Performance_Index =</span> <span class="st">`</span><span class="at">Performance Index</span><span class="st">`</span></span>
+<span id="cb41-9"><a href="intro.html#cb41-9" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="pruebas-de-hipótesis-paramétricas-y-no-paramétricas.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": true,
+    "facebook": false,
+    "twitter": false,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": "github"
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": "https://github.com/luisangel23-cell/metodos-trabajo-final/edit/main/01-intro.Rmd",
+    "text": "Edit"
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": null,
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
